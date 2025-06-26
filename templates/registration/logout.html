@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Logout - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+    }
+    .logout-container {
+        max-width: 450px;
+        width: 100%;
+        padding: 2rem;
+        background-color: #ffffff;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .logout-header {
+        margin-bottom: 1.5rem;
+    }
+    .logout-header h1 {
+        font-size: 1.8rem;
+        color: #4e73df;
+        font-weight: 700;
+    }
+    .logout-header p {
+        color: #6e707e;
+    }
+    .btn-primary {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+    .btn-primary:hover {
+        background-color: #2e59d9;
+        border-color: #2653d4;
+    }
+    .btn-outline-secondary {
+        color: #6e707e;
+        border-color: #6e707e;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #6e707e;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="logout-header">
+        <h1><i class="fas fa-sign-out-alt me-2"></i>Logout</h1>
+        <p class="lead">Are you sure you want to log out?</p>
+    </div>
+
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">Confirm Logout</button>
+            <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

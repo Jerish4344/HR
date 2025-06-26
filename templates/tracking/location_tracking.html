@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Employee Location Tracking - HR Management System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+    #mapid {
+        height: 600px;
+        width: 100%;
+        border-radius: 0.35rem;
+        margin-bottom: 1.5rem;
+    }
+    .filter-card {
+        margin-bottom: 1.5rem;
+    }
+    .employee-list-card .list-group-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1.25rem;
+    }
+    .employee-list-card .list-group-item:hover {
+        background-color: #f8f9fc;
+    }
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 10px;
+    }
+    .last-update-time {
+        font-size: 0.85rem;
+        color: #6e707e;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'tracking:dashboard' %}">Tracking</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Live Tracking</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-location-dot me-2"></i>Live Employee Tracking
+    </h1>
+    <div>
+        {% if user.is_staff %}
+        <a href="{% url 'tracking:geofence_list' %}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-map-marker-alt me-1"></i>Manage Geofences
+        </a>
+        <a href="{% url 'tracking:reports' %}" class="btn btn-outline-info">
+            <i class="fas fa-chart-line me-1"></i>Tracking Reports
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4 filter-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter me-1"></i>Filter Employees
+        </h6>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" action="{% url 'tracking:view' %}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="department" class="form-label">Department</label>
+                    <select name="department" id="department" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if selected_filters.department == dept.id|stringformat:"i" %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="store" class="form-label">Store</label>
+                    <select name="store" id="store" class="form-select">
+                        <option value="">All Stores</option>
+                        {% for s in stores %}
+                            <option value="{{ s.id }}" {% if selected_filters.store == s.id|stringformat:"i" %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="geofence" class="form-label">Geofence Area</label>
+                    <select name="geofence" id="geofence" class="form-select">
+                        <option value="">All Geofences</option>
+                        {% for gf in geofences %}
+                            <option value="{{ gf.id }}" {% if selected_filters.geofence == gf.id|stringformat:"i" %}selected{% endif %}>{{ gf.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'tracking:view' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Live Map</h6>
+            </div>
+            <div class="card-body">
+                <div id="mapid"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow employee-list-card">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Active Employees ({{ tracking_data|length }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for employee_tracking in tracking_data %}
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            {% if employee_tracking.employee.profile_picture %}
+                                <img src="{{ employee_tracking.employee.profile_picture.url }}" alt="{{ employee_tracking.employee.full_name }}" class="employee-avatar">
+                            {% else %}
+                                <div class="bg-primary text-white rounded-circle employee-avatar d-flex align-items-center justify-content-center">
+                                    {{ employee_tracking.employee.first_name|first }}{{ employee_tracking.employee.last_name|first }}
+                                </div>
+                            {% endif %}
+                            <div>
+                                <a href="{% url 'tracking:employee_tracking' employee_id=employee_tracking.employee.id %}">
+                                    {{ employee_tracking.employee.full_name }}
+                                </a>
+                                <div class="small text-muted">{{ employee_tracking.employee.role.name|default:"N/A" }}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            {% if employee_tracking.last_update %}
+                                <div class="last-update-time">Updated: {{ employee_tracking.last_update|date:"H:i:s" }}</div>
+                                {% if employee_tracking.is_stale %}
+                                    <span class="badge bg-danger">Stale Data</span>
+                                {% else %}
+                                    <span class="badge bg-success">Live</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">No Data</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center text-muted py-4">
+                        <i class="fas fa-user-slash fa-2x mb-3"></i>
+                        <p>No employees currently being tracked or matching filters.</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('mapid').setView([{{ map_center.0|default:'12.9716' }}, {{ map_center.1|default:'77.5946' }}], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const employeeData = [
+            {% for employee_tracking in tracking_data %}
+            {% if employee_tracking.last_latitude and employee_tracking.last_longitude %}
+            {
+                id: {{ employee_tracking.employee.id }},
+                name: "{{ employee_tracking.employee.full_name }}",
+                lat: {{ employee_tracking.last_latitude }},
+                lng: {{ employee_tracking.last_longitude }},
+                accuracy: {{ employee_tracking.last_accuracy|default:'0' }},
+                status: "{{ employee_tracking.status }}",
+                last_update: "{{ employee_tracking.last_update|date:'H:i:s' }}",
+                profile_picture: "{% if employee_tracking.employee.profile_picture %}{{ employee_tracking.employee.profile_picture.url }}{% else %}{% endif %}"
+            },
+            {% endif %}
+            {% endfor %}
+        ];
+
+        const markers = {};
+        const geofenceLayers = {};
+
+        function createEmployeeMarker(employee) {
+            const markerHtml = `
+                <div style="text-align: center;">
+                    <img src="${employee.profile_picture || '/static/img/default_avatar.png'}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #4e73df;">
+                    <br><strong>${employee.name}</strong>
+                    <br><small>Last Update: ${employee.last_update}</small>
+                    <br><a href="/employees/${employee.id}/">View Profile</a>
+                </div>
+            `;
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: markerHtml,
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            });
+
+            const marker = L.marker([employee.lat, employee.lng], { icon: customIcon }).addTo(map);
+            marker.bindPopup(markerHtml);
+            
+            if (employee.accuracy > 0) {
+                const circle = L.circle([employee.lat, employee.lng], {
+                    radius: employee.accuracy,
+                    color: '#4e73df',
+                    fillColor: '#4e73df',
+                    fillOpacity: 0.2
+                }).addTo(map);
+                markers[employee.id] = { marker: marker, circle: circle };
+            } else {
+                markers[employee.id] = { marker: marker };
+            }
+        }
+
+        employeeData.forEach(createEmployeeMarker);
+
+        // Fetch and display geofences
+        fetch('/tracking/api/geofences/')
+            .then(response => response.json())
+            .then(data => {
+                data.geofences.forEach(geofence => {
+                    let layer;
+                    if (geofence.type === 'circle') {
+                        layer = L.circle(geofence.center, {
+                            color: geofence.color,
+                            fillColor: geofence.color,
+                            fillOpacity: 0.2,
+                            radius: geofence.radius
+                        });
+                    } else if (geofence.type === 'polygon') {
+                        layer = L.polygon(geofence.coordinates, {
+                            color: geofence.color,
+                            fillColor: geofence.color,
+                            fillOpacity: 0.2
+                        });
+                    } else if (geofence.type === 'rectangle') {
+                        // Assuming coordinates for rectangle are [south-west, north-east] or similar
+                        // Leaflet's L.rectangle takes bounds: [[lat1, lng1], [lat2, lng2]]
+                        layer = L.rectangle(geofence.coordinates, {
+                            color: geofence.color,
+                            fillColor: geofence.color,
+                            fillOpacity: 0.2
+                        });
+                    }
+                    
+                    if (layer) {
+                        layer.bindPopup(`<b>${geofence.name}</b><br>${geofence.type.charAt(0).toUpperCase() + geofence.type.slice(1)} Geofence`);
+                        layer.addTo(map);
+                        geofenceLayers[geofence.id] = layer;
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching geofences:', error));
+
+        // Optional: Periodically update employee locations (via AJAX)
+        // setInterval(function() {
+        //     fetch('/tracking/api/live-locations/')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             data.employees.forEach(updatedEmployee => {
+        //                 if (markers[updatedEmployee.id]) {
+        //                     // Update existing marker position
+        //                     markers[updatedEmployee.id].marker.setLatLng([updatedEmployee.lat, updatedEmployee.lng]);
+        //                     if (markers[updatedEmployee.id].circle) {
+        //                         markers[updatedEmployee.id].circle.setLatLng([updatedEmployee.lat, updatedEmployee.lng]);
+        //                         markers[updatedEmployee.id].circle.setRadius(updatedEmployee.accuracy);
+        //                     }
+        //                     // Update popup content if needed
+        //                     markers[updatedEmployee.id].marker.setPopupContent(`
+        //                         <div style="text-align: center;">
+        //                             <img src="${updatedEmployee.profile_picture || '/static/img/default_avatar.png'}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #4e73df;">
+        //                             <br><strong>${updatedEmployee.name}</strong>
+        //                             <br><small>Last Update: ${updatedEmployee.last_update}</small>
+        //                             <br><a href="/employees/${updatedEmployee.id}/">View Profile</a>
+        //                         </div>
+        //                     `);
+        //                 } else {
+        //                     // Add new marker if employee not on map
+        //                     createEmployeeMarker(updatedEmployee);
+        //                 }
+        //             });
+        //             // Remove markers for employees no longer being tracked
+        //             Object.keys(markers).forEach(markerId => {
+        //                 if (!data.employees.some(emp => emp.id == markerId)) {
+        //                     map.removeLayer(markers[markerId].marker);
+        //                     if (markers[markerId].circle) {
+        //                         map.removeLayer(markers[markerId].circle);
+        //                     }
+        //                     delete markers[markerId];
+        //                 }
+        //             });
+        //         })
+        //         .catch(error => console.error('Error fetching live locations:', error));
+        // }, 30000); // Update every 30 seconds
+    });
+</script>
+{% endblock %}

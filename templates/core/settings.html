@@ -1,0 +1,1060 @@
+{% extends "base.html" %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-header {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .settings-card {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+    }
+    
+    .settings-card .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,0.125);
+        font-weight: 500;
+    }
+    
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+    }
+    
+    .nav-pills .nav-link {
+        color: #495057;
+    }
+    
+    .nav-pills .nav-link:hover:not(.active) {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    
+    .settings-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+    }
+    
+    .settings-help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .permission-group {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .permission-group-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .permission-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .integration-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+    }
+    
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    
+    .status-active {
+        background-color: #198754;
+    }
+    
+    .status-inactive {
+        background-color: #dc3545;
+    }
+    
+    .status-pending {
+        background-color: #fd7e14;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Settings Header -->
+    <div class="settings-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="mb-2">System Settings</h1>
+                <p class="text-muted mb-0">Configure system-wide settings and preferences</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <span class="badge bg-primary me-2">Admin Access</span>
+                <span class="text-muted">Last updated: {{ configs.0.updated_at|date:"F d, Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <!-- Settings Navigation -->
+            <div class="card sticky-top" style="top: 2rem;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Settings Categories</h5>
+                </div>
+                <div class="card-body p-0">
+                    <nav class="nav flex-column nav-pills">
+                        <a class="nav-link active" href="#company-section" data-bs-toggle="pill" data-bs-target="#company-tab">
+                            <i class="bi bi-building"></i> Company Information
+                        </a>
+                        <a class="nav-link" href="#system-section" data-bs-toggle="pill" data-bs-target="#system-tab">
+                            <i class="bi bi-gear"></i> System Settings
+                        </a>
+                        <a class="nav-link" href="#email-section" data-bs-toggle="pill" data-bs-target="#email-tab">
+                            <i class="bi bi-envelope"></i> Email Notifications
+                        </a>
+                        <a class="nav-link" href="#permissions-section" data-bs-toggle="pill" data-bs-target="#permissions-tab">
+                            <i class="bi bi-shield-lock"></i> User Permissions
+                        </a>
+                        <a class="nav-link" href="#integrations-section" data-bs-toggle="pill" data-bs-target="#integrations-tab">
+                            <i class="bi bi-box-arrow-in-right"></i> Integrations
+                        </a>
+                        <a class="nav-link" href="#backup-section" data-bs-toggle="pill" data-bs-target="#backup-tab">
+                            <i class="bi bi-cloud-arrow-up"></i> Backup & Restore
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="tab-content">
+                <!-- Company Information -->
+                <div class="tab-pane fade show active" id="company-tab" role="tabpanel" aria-labelledby="company-section">
+                    <div class="card settings-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-building"></i> Company Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data" id="company-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="company_info">
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="company_name" class="form-label">Company Name</label>
+                                        <input type="text" class="form-control" id="company_name" name="config_company_name" value="{{ company.name|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="company_legal_name" class="form-label">Legal Name</label>
+                                        <input type="text" class="form-control" id="company_legal_name" name="config_company_legal_name" value="{{ company.legal_name|default:'' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="company_registration" class="form-label">Registration Number</label>
+                                        <input type="text" class="form-control" id="company_registration" name="config_company_registration" value="{{ company.registration_number|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="company_tax_id" class="form-label">Tax ID</label>
+                                        <input type="text" class="form-control" id="company_tax_id" name="config_company_tax_id" value="{{ company.tax_id|default:'' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="company_email" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="company_email" name="config_company_email" value="{{ company.email|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="company_phone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="company_phone" name="config_company_phone" value="{{ company.phone|default:'' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="company_website" class="form-label">Website</label>
+                                    <input type="url" class="form-control" id="company_website" name="config_company_website" value="{{ company.website|default:'' }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="company_address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="company_address" name="config_company_address" rows="3">{{ company.address|default:'' }}</textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="company_logo" class="form-label">Company Logo</label>
+                                    <input type="file" class="form-control" id="company_logo" name="company_logo" accept="image/*">
+                                    {% if company.logo %}
+                                        <div class="mt-2">
+                                            <img src="{{ company.logo.url }}" alt="Company Logo" style="max-height: 100px;">
+                                            <div class="form-check mt-1">
+                                                <input class="form-check-input" type="checkbox" id="remove_logo" name="remove_logo">
+                                                <label class="form-check-label" for="remove_logo">Remove logo</label>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="company_description" class="form-label">Company Description</label>
+                                    <textarea class="form-control" id="company_description" name="config_company_description" rows="4">{{ company.description|default:'' }}</textarea>
+                                    <div class="form-text">This description appears on the landing page and public-facing areas.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="company_established" class="form-label">Established Date</label>
+                                    <input type="date" class="form-control" id="company_established" name="config_company_established" value="{{ company.established_date|date:'Y-m-d'|default:'' }}">
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Save Company Information
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Settings -->
+                <div class="tab-pane fade" id="system-tab" role="tabpanel" aria-labelledby="system-section">
+                    <div class="card settings-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-gear"></i> System Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="system-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="system_settings">
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">General Settings</h5>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="system_name" class="form-label">System Name</label>
+                                            <input type="text" class="form-control" id="system_name" name="config_system_name" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "system_name"|first|attr:"value"|default:"HR Management System" }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="system_timezone" class="form-label">Default Timezone</label>
+                                            <select class="form-select" id="system_timezone" name="config_system_timezone">
+                                                <option value="UTC" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "system_timezone"|first|attr:"value" == "UTC" %}selected{% endif %}>UTC</option>
+                                                <option value="Asia/Kolkata" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "system_timezone"|first|attr:"value" == "Asia/Kolkata" %}selected{% endif %}>Asia/Kolkata (IST)</option>
+                                                <option value="America/New_York" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "system_timezone"|first|attr:"value" == "America/New_York" %}selected{% endif %}>America/New_York (EST)</option>
+                                                <option value="Europe/London" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "system_timezone"|first|attr:"value" == "Europe/London" %}selected{% endif %}>Europe/London (GMT)</option>
+                                                <option value="Australia/Sydney" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "system_timezone"|first|attr:"value" == "Australia/Sydney" %}selected{% endif %}>Australia/Sydney (AEST)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="date_format" class="form-label">Date Format</label>
+                                            <select class="form-select" id="date_format" name="config_date_format">
+                                                <option value="Y-m-d" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "date_format"|first|attr:"value" == "Y-m-d" %}selected{% endif %}>YYYY-MM-DD</option>
+                                                <option value="d/m/Y" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "date_format"|first|attr:"value" == "d/m/Y" %}selected{% endif %}>DD/MM/YYYY</option>
+                                                <option value="m/d/Y" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "date_format"|first|attr:"value" == "m/d/Y" %}selected{% endif %}>MM/DD/YYYY</option>
+                                                <option value="d-M-Y" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "date_format"|first|attr:"value" == "d-M-Y" %}selected{% endif %}>DD-MMM-YYYY</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="time_format" class="form-label">Time Format</label>
+                                            <select class="form-select" id="time_format" name="config_time_format">
+                                                <option value="H:i" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "time_format"|first|attr:"value" == "H:i" %}selected{% endif %}>24-hour (14:30)</option>
+                                                <option value="h:i A" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "time_format"|first|attr:"value" == "h:i A" %}selected{% endif %}>12-hour (02:30 PM)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="currency" class="form-label">Default Currency</label>
+                                            <select class="form-select" id="currency" name="config_currency">
+                                                <option value="INR" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "currency"|first|attr:"value" == "INR" %}selected{% endif %}>Indian Rupee (₹)</option>
+                                                <option value="USD" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "currency"|first|attr:"value" == "USD" %}selected{% endif %}>US Dollar ($)</option>
+                                                <option value="EUR" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "currency"|first|attr:"value" == "EUR" %}selected{% endif %}>Euro (€)</option>
+                                                <option value="GBP" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "currency"|first|attr:"value" == "GBP" %}selected{% endif %}>British Pound (£)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="language" class="form-label">Default Language</label>
+                                            <select class="form-select" id="language" name="config_language">
+                                                <option value="en" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "language"|first|attr:"value" == "en" %}selected{% endif %}>English</option>
+                                                <option value="hi" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "language"|first|attr:"value" == "hi" %}selected{% endif %}>Hindi</option>
+                                                <option value="es" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "language"|first|attr:"value" == "es" %}selected{% endif %}>Spanish</option>
+                                                <option value="fr" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "language"|first|attr:"value" == "fr" %}selected{% endif %}>French</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Attendance Settings</h5>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="work_start_time" class="form-label">Default Work Start Time</label>
+                                            <input type="time" class="form-control" id="work_start_time" name="config_work_start_time" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "work_start_time"|first|attr:"value"|default:"09:00" }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="work_end_time" class="form-label">Default Work End Time</label>
+                                            <input type="time" class="form-control" id="work_end_time" name="config_work_end_time" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "work_end_time"|first|attr:"value"|default:"18:00" }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="late_threshold" class="form-label">Late Arrival Threshold (minutes)</label>
+                                            <input type="number" class="form-control" id="late_threshold" name="config_late_threshold" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "late_threshold"|first|attr:"value"|default:"15" }}">
+                                            <div class="form-text">Minutes after work start time when an employee is marked late</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="early_leave_threshold" class="form-label">Early Leaving Threshold (minutes)</label>
+                                            <input type="number" class="form-control" id="early_leave_threshold" name="config_early_leave_threshold" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "early_leave_threshold"|first|attr:"value"|default:"15" }}">
+                                            <div class="form-text">Minutes before work end time when an employee is marked as leaving early</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="attendance_grace_period" class="form-label">Grace Period (minutes)</label>
+                                            <input type="number" class="form-control" id="attendance_grace_period" name="config_attendance_grace_period" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "attendance_grace_period"|first|attr:"value"|default:"5" }}">
+                                            <div class="form-text">Grace period for check-in time before marking as late</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="overtime_threshold" class="form-label">Overtime Threshold (minutes)</label>
+                                            <input type="number" class="form-control" id="overtime_threshold" name="config_overtime_threshold" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "overtime_threshold"|first|attr:"value"|default:"60" }}">
+                                            <div class="form-text">Minutes after work end time to start counting as overtime</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="geo_attendance" name="config_geo_attendance" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "geo_attendance"|first|attr:"value" == "true" %}checked{% endif %}>
+                                            <label class="form-check-label" for="geo_attendance">Enable Geo-Location for Attendance</label>
+                                        </div>
+                                        <div class="form-text">Require location verification for attendance marking</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="geo_radius" class="form-label">Geo-fence Radius (meters)</label>
+                                        <input type="number" class="form-control" id="geo_radius" name="config_geo_radius" min="50" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "geo_radius"|first|attr:"value"|default:"100" }}">
+                                        <div class="form-text">Maximum distance from office location for valid attendance</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Leave Settings</h5>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label for="casual_leave_per_year" class="form-label">Casual Leave (days/year)</label>
+                                            <input type="number" class="form-control" id="casual_leave_per_year" name="config_casual_leave_per_year" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "casual_leave_per_year"|first|attr:"value"|default:"12" }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="sick_leave_per_year" class="form-label">Sick Leave (days/year)</label>
+                                            <input type="number" class="form-control" id="sick_leave_per_year" name="config_sick_leave_per_year" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "sick_leave_per_year"|first|attr:"value"|default:"12" }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="earned_leave_per_year" class="form-label">Earned Leave (days/year)</label>
+                                            <input type="number" class="form-control" id="earned_leave_per_year" name="config_earned_leave_per_year" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "earned_leave_per_year"|first|attr:"value"|default:"15" }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="leave_carryforward" name="config_leave_carryforward" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "leave_carryforward"|first|attr:"value" == "true" %}checked{% endif %}>
+                                            <label class="form-check-label" for="leave_carryforward">Enable Leave Carry Forward</label>
+                                        </div>
+                                        <div class="form-text">Allow unused leaves to be carried forward to next year</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="max_carryforward" class="form-label">Maximum Carry Forward Days</label>
+                                        <input type="number" class="form-control" id="max_carryforward" name="config_max_carryforward" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "max_carryforward"|first|attr:"value"|default:"10" }}">
+                                        <div class="form-text">Maximum number of leave days that can be carried forward</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Security Settings</h5>
+                                    
+                                    <div class="mb-3">
+                                        <label for="password_expiry_days" class="form-label">Password Expiry (days)</label>
+                                        <input type="number" class="form-control" id="password_expiry_days" name="config_password_expiry_days" min="0" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "password_expiry_days"|first|attr:"value"|default:"90" }}">
+                                        <div class="form-text">Number of days after which users must change their password (0 = never)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="session_timeout" class="form-label">Session Timeout (minutes)</label>
+                                        <input type="number" class="form-control" id="session_timeout" name="config_session_timeout" min="5" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "session_timeout"|first|attr:"value"|default:"30" }}">
+                                        <div class="form-text">Time of inactivity after which users are automatically logged out</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="two_factor_auth" name="config_two_factor_auth" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "two_factor_auth"|first|attr:"value" == "true" %}checked{% endif %}>
+                                            <label class="form-check-label" for="two_factor_auth">Enable Two-Factor Authentication</label>
+                                        </div>
+                                        <div class="form-text">Require two-factor authentication for all users</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="login_attempts" name="config_login_attempts" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "login_attempts"|first|attr:"value" == "true" %}checked{% endif %}>
+                                            <label class="form-check-label" for="login_attempts">Limit Login Attempts</label>
+                                        </div>
+                                        <div class="form-text">Lock accounts after multiple failed login attempts</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="max_login_attempts" class="form-label">Maximum Login Attempts</label>
+                                        <input type="number" class="form-control" id="max_login_attempts" name="config_max_login_attempts" min="3" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "max_login_attempts"|first|attr:"value"|default:"5" }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Save System Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Email Notifications -->
+                <div class="tab-pane fade" id="email-tab" role="tabpanel" aria-labelledby="email-section">
+                    <div class="card settings-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-envelope"></i> Email Notifications
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="email-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="email_settings">
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Email Server Configuration</h5>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="email_host" class="form-label">SMTP Host</label>
+                                            <input type="text" class="form-control" id="email_host" name="config_email_host" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "email_host"|first|attr:"value"|default:"smtp.gmail.com" }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="email_port" class="form-label">SMTP Port</label>
+                                            <input type="number" class="form-control" id="email_port" name="config_email_port" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "email_port"|first|attr:"value"|default:"587" }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="email_username" class="form-label">SMTP Username</label>
+                                            <input type="text" class="form-control" id="email_username" name="config_email_username" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "email_username"|first|attr:"value"|default:"" }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="email_password" class="form-label">SMTP Password</label>
+                                            <input type="password" class="form-control" id="email_password" name="config_email_password" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "email_password"|first|attr:"value"|default:"" }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="email_use_tls" name="config_email_use_tls" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "email_use_tls"|first|attr:"value" == "true" %}checked{% endif %}>
+                                            <label class="form-check-label" for="email_use_tls">Use TLS</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="email_from_address" class="form-label">From Email Address</label>
+                                        <input type="email" class="form-control" id="email_from_address" name="config_email_from_address" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "email_from_address"|first|attr:"value"|default:"" }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="email_from_name" class="form-label">From Name</label>
+                                        <input type="text" class="form-control" id="email_from_name" name="config_email_from_name" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "email_from_name"|first|attr:"value"|default:"HR Management System" }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-outline-primary" id="test-email-btn">
+                                            <i class="bi bi-envelope-check"></i> Test Email Configuration
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Notification Settings</h5>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="email_notifications" name="config_email_notifications" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "email_notifications"|first|attr:"value" == "true" %}checked{% endif %}>
+                                            <label class="form-check-label" for="email_notifications">Enable Email Notifications</label>
+                                        </div>
+                                        <div class="form-text">Master switch for all email notifications</div>
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light">Employee Notifications</div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_attendance" name="config_notify_attendance" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_attendance"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_attendance">Attendance Confirmation</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_leave_status" name="config_notify_leave_status" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_leave_status"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_leave_status">Leave Request Status</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_payslip" name="config_notify_payslip" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_payslip"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_payslip">Payslip Generation</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_document_expiry" name="config_notify_document_expiry" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_document_expiry"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_document_expiry">Document Expiry</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_password_reset" name="config_notify_password_reset" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_password_reset"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_password_reset">Password Reset</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_account_activity" name="config_notify_account_activity" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_account_activity"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_account_activity">Account Activity</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light">Manager Notifications</div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_leave_request" name="config_notify_leave_request" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_leave_request"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_leave_request">Leave Requests</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_attendance_issues" name="config_notify_attendance_issues" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_attendance_issues"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_attendance_issues">Attendance Issues</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_team_updates" name="config_notify_team_updates" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_team_updates"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_team_updates">Team Updates</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_performance_reviews" name="config_notify_performance_reviews" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_performance_reviews"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_performance_reviews">Performance Reviews</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light">HR/Admin Notifications</div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_new_employee" name="config_notify_new_employee" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_new_employee"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_new_employee">New Employee Registration</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_employee_exit" name="config_notify_employee_exit" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_employee_exit"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_employee_exit">Employee Exit</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_system_alerts" name="config_notify_system_alerts" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_system_alerts"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_system_alerts">System Alerts</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="notify_payroll_processing" name="config_notify_payroll_processing" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "notify_payroll_processing"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="notify_payroll_processing">Payroll Processing</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Email Templates</h5>
+                                    
+                                    <div class="mb-3">
+                                        <label for="template_welcome" class="form-label">Welcome Email</label>
+                                        <textarea class="form-control" id="template_welcome" name="config_template_welcome" rows="5">{{ configs|dictsort:"key"|selectattr:"key", "equalto", "template_welcome"|first|attr:"value"|default:"Dear {employee_name},\n\nWelcome to {company_name}! Your account has been created successfully.\n\nUsername: {username}\nTemporary Password: {password}\n\nPlease log in and change your password immediately.\n\nRegards,\nHR Team" }}</textarea>
+                                        <div class="form-text">Available variables: {employee_name}, {company_name}, {username}, {password}</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="template_password_reset" class="form-label">Password Reset Email</label>
+                                        <textarea class="form-control" id="template_password_reset" name="config_template_password_reset" rows="5">{{ configs|dictsort:"key"|selectattr:"key", "equalto", "template_password_reset"|first|attr:"value"|default:"Dear {employee_name},\n\nYou have requested to reset your password. Please click the link below to reset your password:\n\n{reset_link}\n\nIf you did not request this, please ignore this email.\n\nRegards,\nHR Team" }}</textarea>
+                                        <div class="form-text">Available variables: {employee_name}, {reset_link}, {company_name}</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="template_leave_approval" class="form-label">Leave Approval Email</label>
+                                        <textarea class="form-control" id="template_leave_approval" name="config_template_leave_approval" rows="5">{{ configs|dictsort:"key"|selectattr:"key", "equalto", "template_leave_approval"|first|attr:"value"|default:"Dear {employee_name},\n\nYour leave request from {start_date} to {end_date} has been {status}.\n\n{comments}\n\nRegards,\nHR Team" }}</textarea>
+                                        <div class="form-text">Available variables: {employee_name}, {start_date}, {end_date}, {status}, {comments}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Save Email Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Permissions -->
+                <div class="tab-pane fade" id="permissions-tab" role="tabpanel" aria-labelledby="permissions-section">
+                    <div class="card settings-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-lock"></i> User Permissions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="permissions-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="permission_settings">
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Role Management</h5>
+                                    
+                                    <div class="table-responsive mb-4">
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Role</th>
+                                                    <th>Description</th>
+                                                    <th>Users</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for role in roles %}
+                                                <tr>
+                                                    <td>{{ role.name }}</td>
+                                                    <td>{{ role.description|truncatechars:50 }}</td>
+                                                    <td>{{ role.employees.count }}</td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-primary edit-role-btn" data-role-id="{{ role.id }}">
+                                                            <i class="bi bi-pencil"></i> Edit
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No roles defined</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <div class="text-end mb-4">
+                                        <button type="button" class="btn btn-success" id="add-role-btn">
+                                            <i class="bi bi-plus-circle"></i> Add New Role
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Permission Settings</h5>
+                                    
+                                    <div class="permission-group">
+                                        <h6 class="permission-group-title">Employee Module</h6>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_view_employees" name="perm_view_employees" checked disabled>
+                                                        <label class="form-check-label" for="perm_view_employees">View Employees</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_add_employees" name="perm_add_employees" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_add_employees"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_add_employees">Add Employees</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_edit_employees" name="perm_edit_employees" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_edit_employees"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_edit_employees">Edit Employees</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_delete_employees" name="perm_delete_employees" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_delete_employees"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_delete_employees">Delete Employees</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-group">
+                                        <h6 class="permission-group-title">Attendance Module</h6>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_view_attendance" name="perm_view_attendance" checked disabled>
+                                                        <label class="form-check-label" for="perm_view_attendance">View Attendance</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_edit_attendance" name="perm_edit_attendance" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_edit_attendance"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_edit_attendance">Edit Attendance</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_approve_leave" name="perm_approve_leave" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_approve_leave"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_approve_leave">Approve Leave</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_manage_shifts" name="perm_manage_shifts" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_manage_shifts"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_manage_shifts">Manage Shifts</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-group">
+                                        <h6 class="permission-group-title">Payroll Module</h6>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_view_payroll" name="perm_view_payroll" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_view_payroll"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_view_payroll">View Payroll</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_process_payroll" name="perm_process_payroll" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_process_payroll"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_process_payroll">Process Payroll</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_edit_salary" name="perm_edit_salary" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_edit_salary"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_edit_salary">Edit Salary</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_approve_payroll" name="perm_approve_payroll" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_approve_payroll"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_approve_payroll">Approve Payroll</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-group">
+                                        <h6 class="permission-group-title">Reports Module</h6>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_view_reports" name="perm_view_reports" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_view_reports"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_view_reports">View Reports</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_export_reports" name="perm_export_reports" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_export_reports"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_export_reports">Export Reports</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_create_reports" name="perm_create_reports" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_create_reports"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_create_reports">Create Reports</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_schedule_reports" name="perm_schedule_reports" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_schedule_reports"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_schedule_reports">Schedule Reports</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-group">
+                                        <h6 class="permission-group-title">System Administration</h6>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_manage_users" name="perm_manage_users" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_manage_users"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_manage_users">Manage Users</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_system_settings" name="perm_system_settings" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_system_settings"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_system_settings">System Settings</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_manage_roles" name="perm_manage_roles" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_manage_roles"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_manage_roles">Manage Roles</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="permission-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="perm_view_logs" name="perm_view_logs" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "perm_view_logs"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="perm_view_logs">View System Logs</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Save Permission Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Integrations -->
+                <div class="tab-pane fade" id="integrations-tab" role="tabpanel" aria-labelledby="integrations-section">
+                    <div class="card settings-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-box-arrow-in-right"></i> Integrations
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="integrations-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="integration_settings">
+                                
+                                <div class="settings-section">
+                                    <h5 class="mb-3">Available Integrations</h5>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <img src="/static/img/integrations/google.png" alt="Google Workspace" class="integration-logo me-3">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-1">Google Workspace</h5>
+                                                    <p class="mb-0 text-muted">Integrate with Google Calendar, Gmail, and Drive</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="integration_google" name="config_integration_google" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "integration_google"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-3 {% if configs|dictsort:"key"|selectattr:"key", "equalto", "integration_google"|first|attr:"value" != "true" %}d-none{% endif %}" id="google-settings">
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label for="google_client_id" class="form-label">Client ID</label>
+                                                        <input type="text" class="form-control" id="google_client_id" name="config_google_client_id" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "google_client_id"|first|attr:"value"|default:"" }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="google_client_secret" class="form-label">Client Secret</label>
+                                                        <input type="password" class="form-control" id="google_client_secret" name="config_google_client_secret" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "google_client_secret"|first|attr:"value"|default:"" }}">
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="google_redirect_uri" class="form-label">Redirect URI</label>
+                                                    <input type="text" class="form-control" id="google_redirect_uri" name="config_google_redirect_uri" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "google_redirect_uri"|first|attr:"value"|default:"" }}">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="google_calendar" name="config_google_calendar" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "google_calendar"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="google_calendar">Enable Calendar Integration</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="google_drive" name="config_google_drive" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "google_drive"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="google_drive">Enable Drive Integration</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="text-end">
+                                                    <button type="button" class="btn btn-outline-primary">
+                                                        <i class="bi bi-link"></i> Test Connection
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <img src="/static/img/integrations/slack.png" alt="Slack" class="integration-logo me-3">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-1">Slack</h5>
+                                                    <p class="mb-0 text-muted">Send notifications and alerts to Slack channels</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="integration_slack" name="config_integration_slack" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "integration_slack"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-3 {% if configs|dictsort:"key"|selectattr:"key", "equalto", "integration_slack"|first|attr:"value" != "true" %}d-none{% endif %}" id="slack-settings">
+                                                <div class="mb-3">
+                                                    <label for="slack_webhook_url" class="form-label">Webhook URL</label>
+                                                    <input type="text" class="form-control" id="slack_webhook_url" name="config_slack_webhook_url" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "slack_webhook_url"|first|attr:"value"|default:"" }}">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="slack_channel" class="form-label">Default Channel</label>
+                                                    <input type="text" class="form-control" id="slack_channel" name="config_slack_channel" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "slack_channel"|first|attr:"value"|default:"#hr-notifications" }}">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="slack_username" class="form-label">Bot Username</label>
+                                                    <input type="text" class="form-control" id="slack_username" name="config_slack_username" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "slack_username"|first|attr:"value"|default:"HR Bot" }}">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Notification Types</label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="slack_attendance" name="config_slack_attendance" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "slack_attendance"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="slack_attendance">Attendance Alerts</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="slack_leave" name="config_slack_leave" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "slack_leave"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="slack_leave">Leave Requests</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="slack_announcements" name="config_slack_announcements" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "slack_announcements"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="slack_announcements">Announcements</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="text-end">
+                                                    <button type="button" class="btn btn-outline-primary">
+                                                        <i class="bi bi-link"></i> Test Connection
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <img src="/static/img/integrations/zoom.png" alt="Zoom" class="integration-logo me-3">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-1">Zoom</h5>
+                                                    <p class="mb-0 text-muted">Schedule and manage meetings directly from the system</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="integration_zoom" name="config_integration_zoom" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "integration_zoom"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-3 {% if configs|dictsort:"key"|selectattr:"key", "equalto", "integration_zoom"|first|attr:"value" != "true" %}d-none{% endif %}" id="zoom-settings">
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label for="zoom_api_key" class="form-label">API Key</label>
+                                                        <input type="text" class="form-control" id="zoom_api_key" name="config_zoom_api_key" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "zoom_api_key"|first|attr:"value"|default:"" }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="zoom_api_secret" class="form-label">API Secret</label>
+                                                        <input type="password" class="form-control" id="zoom_api_secret" name="config_zoom_api_secret" value="{{ configs|dictsort:"key"|selectattr:"key", "equalto", "zoom_api_secret"|first|attr:"value"|default:"" }}">
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="zoom_auto_schedule" name="config_zoom_auto_schedule" {% if configs|dictsort:"key"|selectattr:"key", "equalto", "zoom_auto_schedule"|first|attr:"value" == "true" %}checked{% endif %}>
+                                                        <label class="form-check-label" for="zoom_auto_schedule">Auto-schedule meetings for interviews</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="text-end">
+                                

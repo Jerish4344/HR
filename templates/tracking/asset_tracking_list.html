@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Asset List - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        margin-bottom: 1.5rem;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    .search-box {
+        max-width: 300px;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.25em 0.6em;
+        border-radius: 0.25rem;
+    }
+    .status-assigned {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    .status-available {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+    .status-in_repair {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+    .status-retired {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'tracking:dashboard' %}">Tracking</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Asset List</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-laptop-house me-2"></i>Company Assets
+    </h1>
+    <div>
+        {% if user.is_staff %}
+        <a href="{% url 'tracking:add_asset' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Asset
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow mb-4 filter-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter me-1"></i>Filters
+        </h6>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" action="{% url 'tracking:asset_list' %}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="asset_type" class="form-label">Asset Type</label>
+                    <select name="asset_type" id="asset_type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for type_value, type_label in asset_type_choices %}{# Assuming asset_type_choices is a list of tuples #}
+                            <option value="{{ type_value }}" {% if selected_filters.asset_type == type_value %}selected{% endif %}>
+                                {{ type_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for status_value, status_label in status_choices %}{# Assuming status_choices is a list of tuples #}
+                            <option value="{{ status_value }}" {% if selected_filters.status == status_value %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="assigned_to" class="form-label">Assigned To</label>
+                    <select name="assigned_to" id="assigned_to" class="form-select">
+                        <option value="">All Employees</option>
+                        {% for emp in employees %}{# Assuming employees is a queryset of Employee objects #}
+                            <option value="{{ emp.id }}" {% if selected_filters.assigned_to == emp.id|stringformat:"i" %}selected{% endif %}>
+                                {{ emp.full_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <div class="input-group search-box">
+                        <input type="text" class="form-control" id="search" name="q" placeholder="Search by name, serial number..." value="{{ request.GET.q|default:'' }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'tracking:asset_list' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Asset List -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list me-1"></i>Asset List
+        </h6>
+        <span class="text-muted">{{ page_obj.paginator.count }} assets found</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>Type</th>
+                        <th>Serial Number</th>
+                        <th>Assigned To</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asset in page_obj %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'tracking:asset_detail' asset_id=asset.id %}">
+                                {{ asset.name }}
+                            </a>
+                        </td>
+                        <td>{{ asset.get_asset_type_display|default:"N/A" }}</td>
+                        <td>{{ asset.serial_number|default:"N/A" }}</td>
+                        <td>
+                            {% if asset.assigned_to %}
+                                <div class="d-flex align-items-center">
+                                    {% if asset.assigned_to.profile_picture %}
+                                        <img src="{{ asset.assigned_to.profile_picture.url }}" alt="{{ asset.assigned_to.full_name }}" class="employee-avatar me-2">
+                                    {% else %}
+                                        <div class="bg-primary text-white rounded-circle employee-avatar me-2 d-flex align-items-center justify-content-center">
+                                            {{ asset.assigned_to.first_name|first }}{{ asset.assigned_to.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <a href="{% url 'employees:detail' employee_id=asset.assigned_to.id %}">
+                                        {{ asset.assigned_to.full_name }}
+                                    </a>
+                                </div>
+                            {% else %}
+                                Unassigned
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ asset.status }}">
+                                {{ asset.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'tracking:asset_detail' asset_id=asset.id %}" class="btn btn-sm btn-info" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if user.is_staff %}
+                                <a href="{% url 'tracking:edit_asset' asset_id=asset.id %}" class="btn btn-sm btn-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'tracking:delete_asset' asset_id=asset.id %}" class="btn btn-sm btn-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-box-open fa-3x mb-3"></i>
+                                <p>No assets found matching your criteria.</p>
+                                {% if request.GET %}<a href="{% url 'tracking:asset_list' %}" class="btn btn-outline-primary">Clear Filters</a>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="d-flex justify-content-center mt-4">
+            {% bootstrap_pagination page_obj %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Any specific JavaScript for this page, e.g., dynamic filtering if not handled by Django's form submission.
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,883 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Mark Attendance - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-card {
+        transition: transform 0.3s;
+    }
+    
+    .attendance-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .attendance-type-radio {
+        display: none;
+    }
+    
+    .attendance-type-label {
+        display: block;
+        padding: 1rem;
+        border: 2px solid #e3e6f0;
+        border-radius: 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .attendance-type-radio:checked + .attendance-type-label {
+        border-color: var(--primary);
+        background-color: rgba(78, 115, 223, 0.1);
+    }
+    
+    .attendance-type-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #5a5c69;
+    }
+    
+    .attendance-type-radio:checked + .attendance-type-label .attendance-type-icon {
+        color: var(--primary);
+    }
+    
+    .check-in-out-toggle {
+        margin-bottom: 2rem;
+    }
+    
+    .toggle-btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    .current-status {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .status-checked-in {
+        background-color: rgba(28, 200, 138, 0.1);
+        border: 1px solid rgba(28, 200, 138, 0.5);
+    }
+    
+    .status-checked-out {
+        background-color: rgba(231, 74, 59, 0.1);
+        border: 1px solid rgba(231, 74, 59, 0.5);
+    }
+    
+    .status-not-marked {
+        background-color: rgba(246, 194, 62, 0.1);
+        border: 1px solid rgba(246, 194, 62, 0.5);
+    }
+    
+    .map-container {
+        height: 300px;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .time-display {
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .date-display {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .employee-select-container {
+        margin-bottom: 2rem;
+    }
+    
+    .attendance-history {
+        margin-top: 2rem;
+    }
+    
+    .attendance-record {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        background-color: #f8f9fc;
+        border-left: 4px solid #4e73df;
+    }
+    
+    .attendance-record.check-in {
+        border-left-color: #1cc88a;
+    }
+    
+    .attendance-record.check-out {
+        border-left-color: #e74a3b;
+    }
+    
+    .attendance-record-time {
+        font-weight: 700;
+    }
+    
+    .attendance-record-type {
+        font-weight: 600;
+    }
+    
+    .bulk-attendance-form {
+        display: none;
+    }
+    
+    .bulk-attendance-form.active {
+        display: block;
+    }
+    
+    .individual-attendance-form {
+        display: block;
+    }
+    
+    .individual-attendance-form.inactive {
+        display: none;
+    }
+    
+    .location-status {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .location-status.success {
+        color: #1cc88a;
+    }
+    
+    .location-status.error {
+        color: #e74a3b;
+    }
+    
+    .location-status.warning {
+        color: #f6c23e;
+    }
+    
+    .qr-scanner-container {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'attendance:dashboard' %}">Attendance</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Mark Attendance</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-clipboard-check me-2"></i>Mark Attendance
+    </h1>
+    <div>
+        {% if user.is_staff %}
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary active" id="individual-toggle">
+                <i class="fas fa-user me-1"></i>Individual
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="bulk-toggle">
+                <i class="fas fa-users me-1"></i>Bulk
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Current Date and Time -->
+<div class="row mb-4">
+    <div class="col-md-6 mx-auto text-center">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="time-display" id="current-time">
+                    {{ current_time|time:"H:i:s" }}
+                </div>
+                <div class="date-display">
+                    {{ today|date:"l, F d, Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Individual Attendance Form -->
+<div class="individual-attendance-form">
+    <!-- Current Status -->
+    {% if current_status %}
+    <div class="current-status {% if current_status.status == 'checked_in' %}status-checked-in{% elif current_status.status == 'checked_out' %}status-checked-out{% else %}status-not-marked{% endif %}">
+        <div class="row align-items-center">
+            <div class="col-md-1 text-center">
+                {% if current_status.status == 'checked_in' %}
+                    <i class="fas fa-sign-in-alt fa-2x text-success"></i>
+                {% elif current_status.status == 'checked_out' %}
+                    <i class="fas fa-sign-out-alt fa-2x text-danger"></i>
+                {% else %}
+                    <i class="fas fa-question-circle fa-2x text-warning"></i>
+                {% endif %}
+            </div>
+            <div class="col-md-11">
+                <h5 class="mb-1">
+                    {% if current_status.status == 'checked_in' %}
+                        You are currently checked in
+                    {% elif current_status.status == 'checked_out' %}
+                        You have checked out for today
+                    {% else %}
+                        You have not marked attendance today
+                    {% endif %}
+                </h5>
+                {% if current_status.status == 'checked_in' %}
+                    <p class="mb-0">Checked in at {{ current_status.time_in|time:"H:i" }} ({{ current_status.attendance_type_display }})</p>
+                    {% if current_status.location %}
+                        <p class="mb-0 text-muted">Location: {{ current_status.location }}</p>
+                    {% endif %}
+                {% elif current_status.status == 'checked_out' %}
+                    <p class="mb-0">Checked in at {{ current_status.time_in|time:"H:i" }} and checked out at {{ current_status.time_out|time:"H:i" }}</p>
+                    <p class="mb-0">Total hours: {{ current_status.total_hours }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Check-in/Check-out Toggle -->
+    <div class="check-in-out-toggle text-center">
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="action_type" id="check_in" value="check_in" autocomplete="off" {% if not current_status.status == 'checked_in' %}checked{% else %}disabled{% endif %}>
+            <label class="btn btn-outline-success toggle-btn" for="check_in">
+                <i class="fas fa-sign-in-alt me-1"></i>Check In
+            </label>
+            
+            <input type="radio" class="btn-check" name="action_type" id="check_out" value="check_out" autocomplete="off" {% if current_status.status == 'checked_in' %}checked{% else %}disabled{% endif %}>
+            <label class="btn btn-outline-danger toggle-btn" for="check_out">
+                <i class="fas fa-sign-out-alt me-1"></i>Check Out
+            </label>
+        </div>
+    </div>
+
+    <!-- Attendance Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <span id="form-title">
+                    {% if current_status.status == 'checked_in' %}
+                        Check Out
+                    {% else %}
+                        Check In
+                    {% endif %}
+                </span>
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="attendance-form" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" id="action_input" value="{% if current_status.status == 'checked_in' %}check_out{% else %}check_in{% endif %}">
+                
+                <!-- Check-in specific fields -->
+                <div id="check-in-fields" {% if current_status.status == 'checked_in' %}class="d-none"{% endif %}>
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Attendance Type</label>
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <input type="radio" name="attendance_type" id="type_present" value="present" class="attendance-type-radio" checked>
+                                    <label for="type_present" class="attendance-type-label">
+                                        <div class="attendance-type-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div>Present (Office)</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <input type="radio" name="attendance_type" id="type_wfh" value="work_from_home" class="attendance-type-radio">
+                                    <label for="type_wfh" class="attendance-type-label">
+                                        <div class="attendance-type-icon">
+                                            <i class="fas fa-home"></i>
+                                        </div>
+                                        <div>Work From Home</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <input type="radio" name="attendance_type" id="type_field" value="field_work" class="attendance-type-radio">
+                                    <label for="type_field" class="attendance-type-label">
+                                        <div class="attendance-type-icon">
+                                            <i class="fas fa-map-marked-alt"></i>
+                                        </div>
+                                        <div>Field Work</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <input type="radio" name="attendance_type" id="type_half_day" value="half_day" class="attendance-type-radio">
+                                    <label for="type_half_day" class="attendance-type-label">
+                                        <div class="attendance-type-icon">
+                                            <i class="fas fa-adjust"></i>
+                                        </div>
+                                        <div>Half Day</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Common fields for both check-in and check-out -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Add any notes or comments about your attendance"></textarea>
+                    </div>
+                </div>
+                
+                {% if location_tracking_enabled %}
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="share_location" name="share_location" checked>
+                            <label class="form-check-label" for="share_location">
+                                Share my current location
+                            </label>
+                        </div>
+                        <div id="location-fields">
+                            <div class="map-container" id="location-map"></div>
+                            <input type="hidden" name="latitude" id="latitude">
+                            <input type="hidden" name="longitude" id="longitude">
+                            <input type="hidden" name="accuracy" id="accuracy">
+                            <div class="location-status" id="location-status">
+                                <i class="fas fa-spinner fa-spin me-1"></i> Detecting your location...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                        <i class="fas fa-check-circle me-1"></i>
+                        <span id="submit-text">
+                            {% if current_status.status == 'checked_in' %}
+                                Check Out Now
+                            {% else %}
+                                Check In Now
+                            {% endif %}
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- QR Code Scanner (Optional) -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-qrcode me-1"></i>QR Code Check-in/out
+            </h6>
+            <button class="btn btn-sm btn-primary" id="start-scanner">
+                <i class="fas fa-camera me-1"></i>Start Scanner
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="qr-scanner-container d-none" id="qr-scanner-container">
+                <video id="qr-video"></video>
+            </div>
+            <div class="text-center py-4" id="scanner-placeholder">
+                <i class="fas fa-qrcode fa-3x text-muted mb-3"></i>
+                <p>Click "Start Scanner" to scan a QR code for quick attendance marking</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Attendance History -->
+    <div class="card shadow attendance-history">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-history me-1"></i>Recent Attendance History
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if attendance_history %}
+                {% for record in attendance_history %}
+                    <div class="attendance-record {% if record.event_type == 'check_in' %}check-in{% elif record.event_type == 'check_out' %}check-out{% endif %}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="attendance-record-time">
+                                    {{ record.timestamp|date:"d M Y" }} at {{ record.timestamp|time:"H:i" }}
+                                </div>
+                                <div class="attendance-record-type">
+                                    {% if record.event_type == 'check_in' %}
+                                        <i class="fas fa-sign-in-alt text-success me-1"></i>Checked In
+                                    {% elif record.event_type == 'check_out' %}
+                                        <i class="fas fa-sign-out-alt text-danger me-1"></i>Checked Out
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                {% if record.attendance_type %}
+                                    <div><strong>Type:</strong> {{ record.get_attendance_type_display }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {% if record.remarks %}
+                                    <div><strong>Remarks:</strong> {{ record.remarks }}</div>
+                                {% endif %}
+                                {% if record.location %}
+                                    <div class="text-muted"><small>{{ record.location }}</small></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <p>No recent attendance records found.</p>
+                </div>
+            {% endif %}
+            
+            <div class="text-center mt-3">
+                <a href="{% url 'attendance:history' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-alt me-1"></i>View Full History
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Attendance Form (Staff Only) -->
+{% if user.is_staff %}
+<div class="bulk-attendance-form">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-users me-1"></i>Mark Bulk Attendance
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'attendance:mark_bulk' %}">
+                {% csrf_token %}
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="bulk_date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="bulk_date" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bulk_department" class="form-label">Department</label>
+                        <select class="form-select" id="bulk_department" name="department">
+                            <option value="">All Departments</option>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}">{{ department.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bulk_store" class="form-label">Store</label>
+                        <select class="form-select" id="bulk_store" name="store">
+                            <option value="">All Stores</option>
+                            {% for store in stores %}
+                                <option value="{{ store.id }}">{{ store.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="select-all-employees">
+                                        <label class="form-check-label" for="select-all-employees">
+                                            Employee
+                                        </label>
+                                    </div>
+                                </th>
+                                <th>Status</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input employee-checkbox" type="checkbox" name="employee_ids" value="{{ employee.id }}" id="employee-{{ employee.id }}">
+                                            <label class="form-check-label" for="employee-{{ employee.id }}">
+                                                {{ employee.full_name }}
+                                                <div class="text-muted small">{{ employee.employee_id }}</div>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm" name="statuses" disabled>
+                                            <option value="present">Present</option>
+                                            <option value="absent">Absent</option>
+                                            <option value="half_day">Half Day</option>
+                                            <option value="work_from_home">Work From Home</option>
+                                            <option value="field_work">Field Work</option>
+                                            <option value="leave">On Leave</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control form-control-sm" name="time_ins" value="09:00" disabled>
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control form-control-sm" name="time_outs" value="18:00" disabled>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" name="remarks_list" placeholder="Optional" disabled>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Bulk Attendance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeDisplay = document.getElementById('current-time');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            if (timeDisplay) {
+                timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+        
+        // Update time every second
+        setInterval(updateTime, 1000);
+        
+        // Toggle between check-in and check-out
+        const checkInRadio = document.getElementById('check_in');
+        const checkOutRadio = document.getElementById('check_out');
+        const actionInput = document.getElementById('action_input');
+        const formTitle = document.getElementById('form-title');
+        const submitText = document.getElementById('submit-text');
+        const checkInFields = document.getElementById('check-in-fields');
+        
+        if (checkInRadio && checkOutRadio) {
+            checkInRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    actionInput.value = 'check_in';
+                    formTitle.textContent = 'Check In';
+                    submitText.textContent = 'Check In Now';
+                    checkInFields.classList.remove('d-none');
+                }
+            });
+            
+            checkOutRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    actionInput.value = 'check_out';
+                    formTitle.textContent = 'Check Out';
+                    submitText.textContent = 'Check Out Now';
+                    checkInFields.classList.add('d-none');
+                }
+            });
+        }
+        
+        // Location detection
+        const shareLocationCheckbox = document.getElementById('share_location');
+        const locationFields = document.getElementById('location-fields');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const accuracyInput = document.getElementById('accuracy');
+        const locationStatus = document.getElementById('location-status');
+        
+        if (shareLocationCheckbox && locationFields) {
+            shareLocationCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    locationFields.classList.remove('d-none');
+                    detectLocation();
+                } else {
+                    locationFields.classList.add('d-none');
+                    latitudeInput.value = '';
+                    longitudeInput.value = '';
+                    accuracyInput.value = '';
+                }
+            });
+            
+            // Detect location on page load if checkbox is checked
+            if (shareLocationCheckbox.checked) {
+                detectLocation();
+            }
+        }
+        
+        function detectLocation() {
+            if (navigator.geolocation && locationStatus) {
+                locationStatus.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Detecting your location...';
+                locationStatus.className = 'location-status warning';
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // Success
+                        if (latitudeInput && longitudeInput && accuracyInput) {
+                            latitudeInput.value = position.coords.latitude;
+                            longitudeInput.value = position.coords.longitude;
+                            accuracyInput.value = position.coords.accuracy;
+                            
+                            locationStatus.innerHTML = '<i class="fas fa-check-circle me-1"></i> Location detected successfully';
+                            locationStatus.className = 'location-status success';
+                            
+                            // Initialize map if available
+                            initMap(position.coords.latitude, position.coords.longitude);
+                        }
+                    },
+                    function(error) {
+                        // Error
+                        if (locationStatus) {
+                            locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Failed to detect location: ' + getLocationErrorMessage(error);
+                            locationStatus.className = 'location-status error';
+                        }
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else if (locationStatus) {
+                locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Geolocation is not supported by your browser';
+                locationStatus.className = 'location-status error';
+            }
+        }
+        
+        function getLocationErrorMessage(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    return "User denied the request for geolocation.";
+                case error.POSITION_UNAVAILABLE:
+                    return "Location information is unavailable.";
+                case error.TIMEOUT:
+                    return "The request to get user location timed out.";
+                case error.UNKNOWN_ERROR:
+                    return "An unknown error occurred.";
+                default:
+                    return "Error detecting location.";
+            }
+        }
+        
+        function initMap(latitude, longitude) {
+            const mapContainer = document.getElementById('location-map');
+            
+            if (mapContainer && typeof L !== 'undefined') {
+                // Clear existing map
+                mapContainer.innerHTML = '';
+                
+                // Initialize Leaflet map
+                const map = L.map(mapContainer).setView([latitude, longitude], 15);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Add marker for current location
+                L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup('Your current location')
+                    .openPopup();
+                
+                // Add accuracy circle
+                const accuracy = parseFloat(accuracyInput.value);
+                if (!isNaN(accuracy)) {
+                    L.circle([latitude, longitude], {
+                        radius: accuracy,
+                        color: '#4e73df',
+                        fillColor: '#4e73df',
+                        fillOpacity: 0.2
+                    }).addTo(map);
+                }
+            }
+        }
+        
+        // Toggle between individual and bulk attendance forms
+        const individualToggle = document.getElementById('individual-toggle');
+        const bulkToggle = document.getElementById('bulk-toggle');
+        const individualForm = document.querySelector('.individual-attendance-form');
+        const bulkForm = document.querySelector('.bulk-attendance-form');
+        
+        if (individualToggle && bulkToggle && individualForm && bulkForm) {
+            individualToggle.addEventListener('click', function() {
+                individualToggle.classList.add('active');
+                bulkToggle.classList.remove('active');
+                individualForm.classList.remove('inactive');
+                bulkForm.classList.remove('active');
+            });
+            
+            bulkToggle.addEventListener('click', function() {
+                bulkToggle.classList.add('active');
+                individualToggle.classList.remove('active');
+                individualForm.classList.add('inactive');
+                bulkForm.classList.add('active');
+            });
+        }
+        
+        // Handle bulk attendance employee selection
+        const selectAllCheckbox = document.getElementById('select-all-employees');
+        const employeeCheckboxes = document.querySelectorAll('.employee-checkbox');
+        
+        if (selectAllCheckbox && employeeCheckboxes.length > 0) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                
+                employeeCheckboxes.forEach(function(checkbox) {
+                    checkbox.checked = isChecked;
+                    
+                    // Enable/disable form controls in the row
+                    const row = checkbox.closest('tr');
+                    const formControls = row.querySelectorAll('select, input[type="time"], input[type="text"]');
+                    
+                    formControls.forEach(function(control) {
+                        control.disabled = !isChecked;
+                    });
+                });
+            });
+            
+            employeeCheckboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    // Enable/disable form controls in the row
+                    const row = this.closest('tr');
+                    const formControls = row.querySelectorAll('select, input[type="time"], input[type="text"]');
+                    
+                    formControls.forEach(function(control) {
+                        control.disabled = !this.checked;
+                    });
+                    
+                    // Check if all checkboxes are checked
+                    const allChecked = Array.from(employeeCheckboxes).every(function(cb) {
+                        return cb.checked;
+                    });
+                    
+                    selectAllCheckbox.checked = allChecked;
+                });
+            });
+        }
+        
+        // QR Code Scanner
+        const startScannerButton = document.getElementById('start-scanner');
+        const scannerContainer = document.getElementById('qr-scanner-container');
+        const scannerPlaceholder = document.getElementById('scanner-placeholder');
+        const videoElement = document.getElementById('qr-video');
+        
+        if (startScannerButton && scannerContainer && scannerPlaceholder && videoElement) {
+            let scanner = null;
+            
+            startScannerButton.addEventListener('click', function() {
+                if (scannerContainer.classList.contains('d-none')) {
+                    // Start scanner
+                    scannerContainer.classList.remove('d-none');
+                    scannerPlaceholder.classList.add('d-none');
+                    startScannerButton.innerHTML = '<i class="fas fa-stop me-1"></i>Stop Scanner';
+                    
+                    // Initialize QR scanner if the library is available
+                    if (typeof QrScanner !== 'undefined') {
+                        scanner = new QrScanner(
+                            videoElement,
+                            result => {
+                                // Handle QR code result
+                                handleQrCode(result);
+                                
+                                // Stop scanner after successful scan
+                                stopScanner();
+                            },
+                            { /* options */ }
+                        );
+                        
+                        scanner.start();
+                    } else {
+                        // QR Scanner library not available
+                        scannerContainer.innerHTML = '<div class="alert alert-warning">QR Scanner library not loaded. Please refresh the page or try again later.</div>';
+                    }
+                } else {
+                    // Stop scanner
+                    stopScanner();
+                }
+            });
+            
+            function stopScanner() {
+                if (scanner) {
+                    scanner.stop();
+                    scanner.destroy();
+                    scanner = null;
+                }
+                
+                scannerContainer.classList.add('d-none');
+                scannerPlaceholder.classList.remove('d-none');
+                startScannerButton.innerHTML = '<i class="fas fa-camera me-1"></i>Start Scanner';
+            }
+            
+            function handleQrCode(result) {
+                // Process QR code result
+                // Example: result might be in format "check_in:employee_id:location"
+                const parts = result.split(':');
+                
+                if (parts.length >= 2) {
+                    const action = parts[0];
+                    const employeeId = parts[1];
+                    
+                    // Set form values based on QR code
+                    if (action === 'check_in' || action === 'check_out') {
+                        if (action === 'check_in') {
+                            checkInRadio.checked = true;
+                            checkInRadio.dispatchEvent(new Event('change'));
+                        } else {
+                            checkOutRadio.checked = true;
+                            checkOutRadio.dispatchEvent(new Event('change'));
+                        }
+                        
+                        // Submit the form automatically
+                        document.getElementById('attendance-form').submit();
+                    }
+                }
+                
+                // Show success message
+                alert('QR Code scanned successfully: ' + result);
+            }
+        }
+        
+        // Form validation
+        const attendanceForm = document.getElementById('attendance-form');
+        
+        if (attendanceForm) {
+            attendanceForm.addEventListener('submit', function(event) {
+                if (!this.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                this.classList.add('was-validated');
+            });
+        }
+    });
+</script>
+{% endblock %}

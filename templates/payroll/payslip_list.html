@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Payslips - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        margin-bottom: 1.5rem;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.25em 0.6em;
+        border-radius: 0.25rem;
+    }
+    .status-paid {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    .status-pending {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+    .status-failed {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'payroll:dashboard' %}">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Payslips</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-money-check-alt me-2"></i>Payslips
+    </h1>
+    <div>
+        {% if user.is_staff %}
+        <a href="{% url 'payroll:process' %}" class="btn btn-primary">
+            <i class="fas fa-calculator me-1"></i>Process Payroll
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow mb-4 filter-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter me-1"></i>Filters
+        </h6>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" action="{% url 'payroll:payslips' %}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="employee" class="form-label">Employee</label>
+                    <select name="employee" id="employee" class="form-select">
+                        <option value="">All Employees</option>
+                        {% for emp in employees %}
+                            <option value="{{ emp.id }}" {% if selected_filters.employee == emp.id|stringformat:"i" %}selected{% endif %}>
+                                {{ emp.full_name }} ({{ emp.employee_id }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select name="department" id="department" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}\
+                            <option value="{{ dept.id }}" {% if selected_filters.department == dept.id|stringformat:"i" %}selected{% endif %}>
+                                {{ dept.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="month" class="form-label">Month</label>
+                    <select name="month" id="month" class="form-select">
+                        <option value="">All Months</option>
+                        {% for m in 12|get_range %}
+                            <option value="{{ m }}" {% if selected_filters.month == m|stringformat:"i" %}selected{% endif %}>
+                                {{ m|date:"M" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="year" class="form-label">Year</label>
+                    <select name="year" id="year" class="form-select">
+                        <option value="">All Years</option>
+                        {% for y in 2020|get_range_to:2025 %} {# Adjust year range as needed #}
+                            <option value="{{ y }}" {% if selected_filters.year == y|stringformat:"i" %}selected{% endif %}>
+                                {{ y }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for status_value, status_label in status_choices %}
+                            <option value="{{ status_value }}" {% if selected_filters.status == status_value %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'payroll:payslips' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Payslip List -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list me-1"></i>Payslip List
+        </h6>
+        <span class="text-muted">{{ page_obj.paginator.count }} payslips found</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Period</th>
+                        <th>Gross Salary</th>
+                        <th>Deductions</th>
+                        <th>Net Salary</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payslip in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if payslip.employee.profile_picture %}\
+                                    <img src="{{ payslip.employee.profile_picture.url }}" alt="{{ payslip.employee.full_name }}" class="employee-avatar me-2">\
+                                {% else %}\
+                                    <div class="bg-primary text-white rounded-circle employee-avatar me-2 d-flex align-items-center justify-content-center">\
+                                        {{ payslip.employee.first_name|first }}{{ payslip.employee.last_name|first }}\
+                                    </div>\
+                                {% endif %}\
+                                <div>
+                                    <a href="{% url 'employees:detail' employee_id=payslip.employee.id %}">
+                                        {{ payslip.employee.full_name }}
+                                    </a>
+                                    <div class="small text-muted">{{ payslip.employee.employee_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ payslip.period.month|date:"F" }} {{ payslip.period.year }}</td>
+                        <td>${{ payslip.gross_salary|floatformat:2 }}</td>
+                        <td>${{ payslip.total_deductions|floatformat:2 }}</td>
+                        <td>${{ payslip.net_salary|floatformat:2 }}</td>
+                        <td>
+                            <span class="status-badge status-{{ payslip.status }}">
+                                {{ payslip.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'payroll:payslip_detail' payslip_id=payslip.id %}" class="btn btn-sm btn-info" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'payroll:download_payslip' payslip_id=payslip.id %}" class="btn btn-sm btn-success" title="Download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            {% if user.is_staff %}
+                            <a href="{% url 'payroll:edit_payslip' payslip_id=payslip.id %}" class="btn btn-sm btn-primary" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-file-invoice-dollar fa-3x mb-3"></i>
+                                <p>No payslips found matching your criteria.</p>
+                                {% if request.GET %}<a href="{% url 'payroll:payslips' %}" class="btn btn-outline-primary">Clear Filters</a>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="d-flex justify-content-center mt-4">
+            {% bootstrap_pagination page_obj %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any specific JavaScript for this page, e.g., dynamic filtering if not handled by Django's form submission.
+    });
+</script>
+{% endblock %}

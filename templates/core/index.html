@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Welcome to HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        padding: 5rem 0;
+        margin-bottom: 3rem;
+    }
+    
+    .feature-card {
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        color: #4e73df;
+    }
+    
+    .cta-section {
+        background-color: #f8f9fc;
+        padding: 4rem 0;
+        margin-top: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Streamline Your HR Operations</h1>
+                <p class="lead mb-4">A comprehensive HR management solution designed to simplify employee management, attendance tracking, payroll processing, and more.</p>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'login' %}" class="btn btn-light btn-lg px-4 me-2">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg px-4">Learn More</a>
+                {% else %}
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg px-4 me-2">
+                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg px-4">Explore Features</a>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="/static/img/hero-image.svg" alt="HR Management" class="img-fluid" 
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/600x400?text=HR+Management+System'">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5" id="features">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Comprehensive HR Management Features</h2>
+        <p class="lead text-muted">Everything you need to manage your workforce efficiently</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h4>Employee Management</h4>
+                    <p class="text-muted">Maintain comprehensive employee profiles with personal details, documents, skills, and employment history.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h4>Attendance Tracking</h4>
+                    <p class="text-muted">Track employee attendance, manage leave requests, and generate detailed attendance reports.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h4>Payroll Processing</h4>
+                    <p class="text-muted">Streamline payroll calculations, manage salary structures, and generate payslips automatically.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-house-user"></i>
+                    </div>
+                    <h4>Accommodation Management</h4>
+                    <p class="text-muted">Manage employee housing, track allocations, and handle accommodation requests efficiently.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-location-dot"></i>
+                    </div>
+                    <h4>Employee Tracking</h4>
+                    <p class="text-muted">Monitor field employees with real-time location tracking and geofence notifications.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Comprehensive Reports</h4>
+                    <p class="text-muted">Generate insightful reports on employees, attendance, payroll, and more for data-driven decisions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action Section -->
+<div class="cta-section">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-4">Ready to Transform Your HR Operations?</h2>
+        <p class="lead mb-4">Join organizations that trust our HR Management System to streamline their workforce management.</p>
+        {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-sign-in-alt me-2"></i>Get Started
+            </a>
+        {% else %}
+            <a href="{% url 'core:dashboard' %}" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

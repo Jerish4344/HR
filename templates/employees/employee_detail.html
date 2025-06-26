@@ -1,0 +1,1225 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}{{ employee.full_name }} - Employee Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .employee-profile-header {
+        background-color: #fff;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        margin-bottom: 1.5rem;
+        padding: 2rem;
+    }
+    
+    .employee-profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #fff;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+    
+    .employee-profile-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .employee-profile-title {
+        font-size: 1rem;
+        color: #6e707e;
+        margin-bottom: 1rem;
+    }
+    
+    .employee-profile-details {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .employee-profile-detail {
+        margin-right: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .employee-profile-detail-label {
+        font-size: 0.8rem;
+        color: #6e707e;
+    }
+    
+    .employee-profile-detail-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    
+    .status-probation {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+    
+    .status-terminated {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    
+    .status-notice_period {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+    
+    .tab-content {
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 0 0 0.35rem 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6e707e;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #4e73df;
+        border-bottom: 2px solid #4e73df;
+        background-color: transparent;
+    }
+    
+    .info-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #4e73df;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .info-row {
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    
+    .document-card, .education-card, .experience-card, .contact-card {
+        transition: transform 0.3s;
+    }
+    
+    .document-card:hover, .education-card:hover, .experience-card:hover, .contact-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #e3e6f0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-badge {
+        position: absolute;
+        left: -2.35rem;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #4e73df;
+        border: 3px solid #fff;
+    }
+    
+    .timeline-content {
+        background-color: #fff;
+        border-radius: 0.35rem;
+        padding: 1rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .timeline-date {
+        font-size: 0.8rem;
+        color: #6e707e;
+        margin-bottom: 0.5rem;
+    }
+    
+    .timeline-text {
+        color: #5a5c69;
+    }
+    
+    .subordinates-list .employee-item {
+        padding: 0.75rem;
+        border-radius: 0.35rem;
+        margin-bottom: 0.5rem;
+        transition: background-color 0.3s;
+    }
+    
+    .subordinates-list .employee-item:hover {
+        background-color: #f8f9fc;
+    }
+    
+    @media (max-width: 767.98px) {
+        .employee-profile-header {
+            padding: 1rem;
+        }
+        
+        .employee-profile-avatar {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .employee-profile-name {
+            font-size: 1.2rem;
+        }
+        
+        .employee-profile-title {
+            font-size: 0.9rem;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'employees:list' %}">Employees</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ employee.full_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Employee Profile Header -->
+<div class="employee-profile-header">
+    <div class="row">
+        <div class="col-md-2 col-sm-3 text-center text-md-start mb-3 mb-md-0">
+            {% if employee.profile_picture %}
+                <img src="{{ employee.profile_picture.url }}" alt="{{ employee.full_name }}" class="employee-profile-avatar">
+            {% else %}
+                <div class="employee-profile-avatar bg-primary text-white d-flex align-items-center justify-content-center">
+                    <span class="display-4">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-7 col-sm-9">
+            <h1 class="employee-profile-name">{{ employee.full_name }}</h1>
+            <p class="employee-profile-title">
+                {{ employee.role.name|default:"No Role Assigned" }} at {{ employee.department.name|default:"No Department Assigned" }}
+            </p>
+            
+            <div class="employee-profile-details">
+                <div class="employee-profile-detail">
+                    <div class="employee-profile-detail-label">Employee ID</div>
+                    <div class="employee-profile-detail-value">{{ employee.employee_id }}</div>
+                </div>
+                <div class="employee-profile-detail">
+                    <div class="employee-profile-detail-label">Status</div>
+                    <div class="employee-profile-detail-value">
+                        <span class="status-badge status-{{ employee.status }}">
+                            {{ employee.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="employee-profile-detail">
+                    <div class="employee-profile-detail-label">Joined</div>
+                    <div class="employee-profile-detail-value">{{ employee.date_joined|date:"M d, Y" }}</div>
+                </div>
+                <div class="employee-profile-detail">
+                    <div class="employee-profile-detail-label">Service Duration</div>
+                    <div class="employee-profile-detail-value">{{ employee.service_duration }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3 mt-md-0">
+            <div class="d-flex flex-column flex-sm-row flex-md-column gap-2 justify-content-md-end">
+                {% if user.is_staff or user.employee_profile == employee %}
+                    <a href="{% url 'employees:update' employee_id=employee.id %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i>Edit Profile
+                    </a>
+                {% endif %}
+                
+                {% if user.is_staff %}
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="employeeActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog me-1"></i>Actions
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="employeeActionsDropdown">
+                            <li><a class="dropdown-item" href="{% url 'employees:documents' employee_id=employee.id %}">
+                                <i class="fas fa-file me-1"></i>Manage Documents
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'employees:transfer_create' employee_id=employee.id %}">
+                                <i class="fas fa-exchange-alt me-1"></i>Initiate Transfer
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'employees:promotion_create' employee_id=employee.id %}">
+                                <i class="fas fa-arrow-up me-1"></i>Initiate Promotion
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'employees:review_create' employee_id=employee.id %}">
+                                <i class="fas fa-clipboard-check me-1"></i>New Performance Review
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'employees:delete' employee_id=employee.id %}">
+                                <i class="fas fa-trash me-1"></i>Delete Employee
+                            </a></li>
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Details Tabs -->
+<ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'personal' or not active_tab %}active{% endif %}" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">
+            <i class="fas fa-user me-1"></i>Personal
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'employment' %}active{% endif %}" id="employment-tab" data-bs-toggle="tab" data-bs-target="#employment" type="button" role="tab" aria-controls="employment" aria-selected="false">
+            <i class="fas fa-briefcase me-1"></i>Employment
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'documents' %}active{% endif %}" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
+            <i class="fas fa-file me-1"></i>Documents
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'education' %}active{% endif %}" id="education-tab" data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab" aria-controls="education" aria-selected="false">
+            <i class="fas fa-graduation-cap me-1"></i>Education
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'experience' %}active{% endif %}" id="experience-tab" data-bs-toggle="tab" data-bs-target="#experience" type="button" role="tab" aria-controls="experience" aria-selected="false">
+            <i class="fas fa-history me-1"></i>Experience
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button" role="tab" aria-controls="contacts" aria-selected="false">
+            <i class="fas fa-address-book me-1"></i>Contacts
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'career' %}active{% endif %}" id="career-tab" data-bs-toggle="tab" data-bs-target="#career" type="button" role="tab" aria-controls="career" aria-selected="false">
+            <i class="fas fa-chart-line me-1"></i>Career
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="employeeTabsContent">
+    <!-- Personal Information Tab -->
+    <div class="tab-pane fade {% if active_tab == 'personal' or not active_tab %}show active{% endif %}" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="info-section">
+                    <h3 class="info-section-title">Personal Information</h3>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Full Name</div>
+                        <div class="col-sm-8">{{ employee.full_name }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Date of Birth</div>
+                        <div class="col-sm-8">{{ employee.date_of_birth|date:"F d, Y" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Gender</div>
+                        <div class="col-sm-8">{{ employee.get_gender_display }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Marital Status</div>
+                        <div class="col-sm-8">{{ employee.get_marital_status_display }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Blood Group</div>
+                        <div class="col-sm-8">{{ employee.get_blood_group_display }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Nationality</div>
+                        <div class="col-sm-8">{{ employee.nationality }}</div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-section-title">Contact Information</h3>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Primary Phone</div>
+                        <div class="col-sm-8">
+                            <a href="tel:{{ employee.primary_phone }}">{{ employee.primary_phone }}</a>
+                        </div>
+                    </div>
+                    {% if employee.secondary_phone %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Secondary Phone</div>
+                        <div class="col-sm-8">
+                            <a href="tel:{{ employee.secondary_phone }}">{{ employee.secondary_phone }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Personal Email</div>
+                        <div class="col-sm-8">
+                            <a href="mailto:{{ employee.personal_email }}">{{ employee.personal_email }}</a>
+                        </div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Official Email</div>
+                        <div class="col-sm-8">
+                            <a href="mailto:{{ employee.official_email }}">{{ employee.official_email }}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="info-section">
+                    <h3 class="info-section-title">Address Information</h3>
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Current Address</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if employee.current_address %}
+                                <p>{{ employee.current_address.street_address }}</p>
+                                <p>{{ employee.current_address.city }}, {{ employee.current_address.state }} {{ employee.current_address.postal_code }}</p>
+                                <p>{{ employee.current_address.country }}</p>
+                            {% else %}
+                                <p class="text-muted">No current address information available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Permanent Address</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if employee.permanent_address %}
+                                <p>{{ employee.permanent_address.street_address }}</p>
+                                <p>{{ employee.permanent_address.city }}, {{ employee.permanent_address.state }} {{ employee.permanent_address.postal_code }}</p>
+                                <p>{{ employee.permanent_address.country }}</p>
+                            {% else %}
+                                <p class="text-muted">No permanent address information available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-section-title">Skills & Languages</h3>
+                    <div class="mb-3">
+                        <h6>Skills</h6>
+                        {% if skills %}
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for skill in skills %}
+                                    <span class="badge bg-primary">{{ skill.name }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No skills listed.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <h6>Languages</h6>
+                        {% if languages %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Language</th>
+                                            <th>Reading</th>
+                                            <th>Writing</th>
+                                            <th>Speaking</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lang in languages %}
+                                            <tr>
+                                                <td>{{ lang.language.name }}</td>
+                                                <td>{{ lang.get_reading_display }}</td>
+                                                <td>{{ lang.get_writing_display }}</td>
+                                                <td>{{ lang.get_speaking_display }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No languages listed.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Employment Information Tab -->
+    <div class="tab-pane fade {% if active_tab == 'employment' %}show active{% endif %}" id="employment" role="tabpanel" aria-labelledby="employment-tab">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="info-section">
+                    <h3 class="info-section-title">Employment Details</h3>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Department</div>
+                        <div class="col-sm-8">{{ employee.department.name|default:"Not Assigned" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Store</div>
+                        <div class="col-sm-8">{{ employee.store.name|default:"Not Assigned" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Role</div>
+                        <div class="col-sm-8">{{ employee.role.name|default:"Not Assigned" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Reporting Manager</div>
+                        <div class="col-sm-8">
+                            {% if employee.reporting_manager %}
+                                <a href="{% url 'employees:detail' employee_id=employee.reporting_manager.id %}">
+                                    {{ employee.reporting_manager.full_name }}
+                                </a>
+                            {% else %}
+                                Not Assigned
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Employment Type</div>
+                        <div class="col-sm-8">{{ employee.get_employment_type_display }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Date Joined</div>
+                        <div class="col-sm-8">{{ employee.date_joined|date:"F d, Y" }}</div>
+                    </div>
+                    {% if employee.probation_end_date %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Probation End Date</div>
+                        <div class="col-sm-8">{{ employee.probation_end_date|date:"F d, Y" }}</div>
+                    </div>
+                    {% endif %}
+                    {% if employee.confirmation_date %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Confirmation Date</div>
+                        <div class="col-sm-8">{{ employee.confirmation_date|date:"F d, Y" }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Notice Period</div>
+                        <div class="col-sm-8">{{ employee.notice_period_days }} days</div>
+                    </div>
+                    {% if employee.last_working_date %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Last Working Date</div>
+                        <div class="col-sm-8">{{ employee.last_working_date|date:"F d, Y" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-section-title">Financial Information</h3>
+                    {% if user.is_staff %}
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">Bank Name</div>
+                            <div class="col-sm-8">{{ employee.bank_name|default:"Not Available" }}</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">Account Number</div>
+                            <div class="col-sm-8">{{ employee.bank_account_number|default:"Not Available" }}</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">IFSC Code</div>
+                            <div class="col-sm-8">{{ employee.ifsc_code|default:"Not Available" }}</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">PAN Number</div>
+                            <div class="col-sm-8">{{ employee.pan_number|default:"Not Available" }}</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">Aadhar Number</div>
+                            <div class="col-sm-8">{{ employee.aadhar_number|default:"Not Available" }}</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">UAN Number</div>
+                            <div class="col-sm-8">{{ employee.uan_number|default:"Not Available" }}</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-sm-4 info-label">ESIC Number</div>
+                            <div class="col-sm-8">{{ employee.esic_number|default:"Not Available" }}</div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Financial information is only visible to HR and administrative staff.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="info-section">
+                    <h3 class="info-section-title">Additional Information</h3>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Remote Worker</div>
+                        <div class="col-sm-8">{{ employee.is_remote_worker|yesno:"Yes,No" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Requires Accommodation</div>
+                        <div class="col-sm-8">{{ employee.requires_accommodation|yesno:"Yes,No" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Location Tracking</div>
+                        <div class="col-sm-8">{{ employee.location_tracking_enabled|yesno:"Enabled,Disabled" }}</div>
+                    </div>
+                    {% if employee.notes %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Notes</div>
+                        <div class="col-sm-8">{{ employee.notes|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-section-title">Reporting Employees</h3>
+                    {% if subordinates %}
+                        <div class="subordinates-list">
+                            {% for subordinate in subordinates %}
+                                <div class="employee-item d-flex align-items-center">
+                                    <div class="me-3">
+                                        {% if subordinate.profile_picture %}
+                                            <img src="{{ subordinate.profile_picture.url }}" alt="{{ subordinate.full_name }}" class="employee-avatar" style="width: 40px; height: 40px;">
+                                        {% else %}
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                {{ subordinate.first_name|first }}{{ subordinate.last_name|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div>
+                                            <a href="{% url 'employees:detail' employee_id=subordinate.id %}">
+                                                {{ subordinate.full_name }}
+                                            </a>
+                                        </div>
+                                        <div class="small text-muted">
+                                            {{ subordinate.role.name|default:"No Role" }} | {{ subordinate.employee_id }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No employees reporting to this employee.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-section-title">System Information</h3>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Created By</div>
+                        <div class="col-sm-8">{{ employee.created_by.get_full_name|default:employee.created_by.username }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Created At</div>
+                        <div class="col-sm-8">{{ employee.created_at|date:"F d, Y H:i" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Last Updated</div>
+                        <div class="col-sm-8">{{ employee.updated_at|date:"F d, Y H:i" }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Updated By</div>
+                        <div class="col-sm-8">{{ employee.updated_by.get_full_name|default:employee.updated_by.username }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Documents Tab -->
+    <div class="tab-pane fade {% if active_tab == 'documents' %}show active{% endif %}" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="info-section-title mb-0">Employee Documents</h3>
+            {% if user.is_staff or user.employee_profile == employee %}
+                <a href="{% url 'employees:upload_document' employee_id=employee.id %}" class="btn btn-primary">
+                    <i class="fas fa-upload me-1"></i>Upload Document
+                </a>
+            {% endif %}
+        </div>
+        
+        {% if documents %}
+            <div class="row">
+                {% for document in documents %}
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card h-100 document-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ document.get_document_type_display }}</h5>
+                                {% if document.is_verified %}
+                                    <span class="badge bg-success">Verified</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Unverified</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">{{ document.document.title }}</h6>
+                                {% if document.document.description %}
+                                    <p class="card-text">{{ document.document.description }}</p>
+                                {% endif %}
+                                
+                                {% if document.expiry_date %}
+                                    <p class="card-text">
+                                        <strong>Expires:</strong> {{ document.expiry_date|date:"F d, Y" }}
+                                        {% if document.is_expired %}
+                                            <span class="badge bg-danger ms-2">Expired</span>
+                                        {% endif %}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer d-flex justify-content-between">
+                                <a href="{{ document.document.file.url }}" class="btn btn-sm btn-info" target="_blank">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                                <div>
+                                    <a href="{{ document.document.file.url }}" class="btn btn-sm btn-secondary" download>
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </a>
+                                    
+                                    {% if user.is_staff and not document.is_verified %}
+                                        <a href="{% url 'employees:document_verify' document_id=document.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check me-1"></i>Verify
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                <p class="mb-3">No documents have been uploaded for this employee.</p>
+                {% if user.is_staff or user.employee_profile == employee %}
+                    <a href="{% url 'employees:upload_document' employee_id=employee.id %}" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>Upload Document
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Education Tab -->
+    <div class="tab-pane fade {% if active_tab == 'education' %}show active{% endif %}" id="education" role="tabpanel" aria-labelledby="education-tab">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="info-section-title mb-0">Education History</h3>
+            {% if user.is_staff or user.employee_profile == employee %}
+                <a href="{% url 'employees:education_create' employee_id=employee.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add Education
+                </a>
+            {% endif %}
+        </div>
+        
+        {% if education %}
+            <div class="row">
+                {% for edu in education %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100 education-card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">{{ edu.degree }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">{{ edu.institution }}</h6>
+                                <p class="card-text">{{ edu.field_of_study }}</p>
+                                
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>
+                                        <strong>Duration:</strong>
+                                        {{ edu.start_date|date:"M Y" }} - 
+                                        {% if edu.is_ongoing %}
+                                            <span class="badge bg-info">Ongoing</span>
+                                        {% else %}
+                                            {{ edu.end_date|date:"M Y"|default:"Present" }}
+                                        {% endif %}
+                                    </span>
+                                    
+                                    {% if edu.grade %}
+                                        <span><strong>Grade:</strong> {{ edu.grade }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if edu.description %}
+                                    <p class="card-text">{{ edu.description }}</p>
+                                {% endif %}
+                            </div>
+                            {% if user.is_staff or user.employee_profile == employee %}
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-end">
+                                        <a href="{% url 'employees:education_update' education_id=edu.id %}" class="btn btn-sm btn-primary me-2">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <a href="{% url 'employees:education_delete' education_id=edu.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                <p class="mb-3">No education history has been added for this employee.</p>
+                {% if user.is_staff or user.employee_profile == employee %}
+                    <a href="{% url 'employees:education_create' employee_id=employee.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add Education
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Work Experience Tab -->
+    <div class="tab-pane fade {% if active_tab == 'experience' %}show active{% endif %}" id="experience" role="tabpanel" aria-labelledby="experience-tab">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="info-section-title mb-0">Work Experience</h3>
+            {% if user.is_staff or user.employee_profile == employee %}
+                <a href="{% url 'employees:experience_create' employee_id=employee.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add Experience
+                </a>
+            {% endif %}
+        </div>
+        
+        {% if work_experience %}
+            <div class="row">
+                {% for exp in work_experience %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100 experience-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ exp.job_title }}</h5>
+                                {% if exp.is_current %}
+                                    <span class="badge bg-success">Current</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">{{ exp.company_name }}</h6>
+                                
+                                <div class="mb-2">
+                                    <strong>Duration:</strong>
+                                    {{ exp.start_date|date:"M Y" }} - 
+                                    {% if exp.is_current %}
+                                        Present
+                                    {% else %}
+                                        {{ exp.end_date|date:"M Y"|default:"Present" }}
+                                    {% endif %}
+                                    <span class="text-muted">({{ exp.duration }})</span>
+                                </div>
+                                
+                                {% if exp.location %}
+                                    <div class="mb-2">
+                                        <strong>Location:</strong> {{ exp.location }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if exp.description %}
+                                    <p class="card-text">{{ exp.description }}</p>
+                                {% endif %}
+                                
+                                {% if exp.reference_name %}
+                                    <div class="mt-3 p-2 bg-light rounded">
+                                        <div><strong>Reference:</strong> {{ exp.reference_name }}</div>
+                                        {% if exp.reference_contact %}
+                                            <div><strong>Contact:</strong> {{ exp.reference_contact }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if user.is_staff or user.employee_profile == employee %}
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-end">
+                                        <a href="{% url 'employees:experience_update' experience_id=exp.id %}" class="btn btn-sm btn-primary me-2">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <a href="{% url 'employees:experience_delete' experience_id=exp.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                <p class="mb-3">No work experience has been added for this employee.</p>
+                {% if user.is_staff or user.employee_profile == employee %}
+                    <a href="{% url 'employees:experience_create' employee_id=employee.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add Experience
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Emergency Contacts Tab -->
+    <div class="tab-pane fade {% if active_tab == 'contacts' %}show active{% endif %}" id="contacts" role="tabpanel" aria-labelledby="contacts-tab">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="info-section-title mb-0">Emergency Contacts</h3>
+            {% if user.is_staff or user.employee_profile == employee %}
+                <a href="{% url 'employees:contact_create' employee_id=employee.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add Contact
+                </a>
+            {% endif %}
+        </div>
+        
+        {% if emergency_contacts %}
+            <div class="row">
+                {% for contact in emergency_contacts %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100 contact-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ contact.name }}</h5>
+                                {% if contact.is_primary %}
+                                    <span class="badge bg-primary">Primary Contact</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">{{ contact.relationship }}</h6>
+                                
+                                <div class="mb-2">
+                                    <strong>Primary Phone:</strong>
+                                    <a href="tel:{{ contact.primary_phone }}">{{ contact.primary_phone }}</a>
+                                </div>
+                                
+                                {% if contact.secondary_phone %}
+                                    <div class="mb-2">
+                                        <strong>Secondary Phone:</strong>
+                                        <a href="tel:{{ contact.secondary_phone }}">{{ contact.secondary_phone }}</a>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if contact.email %}
+                                    <div class="mb-2">
+                                        <strong>Email:</strong>
+                                        <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if contact.address %}
+                                    <div class="mb-2">
+                                        <strong>Address:</strong>
+                                        <p class="mb-0">{{ contact.address }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if user.is_staff or user.employee_profile == employee %}
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-end">
+                                        <a href="{% url 'employees:contact_update' contact_id=contact.id %}" class="btn btn-sm btn-primary me-2">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <a href="{% url 'employees:contact_delete' contact_id=contact.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-address-book fa-3x text-muted mb-3"></i>
+                <p class="mb-3">No emergency contacts have been added for this employee.</p>
+                {% if user.is_staff or user.employee_profile == employee %}
+                    <a href="{% url 'employees:contact_create' employee_id=employee.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add Contact
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Career Tab -->
+    <div class="tab-pane fade {% if active_tab == 'career' %}show active{% endif %}" id="career" role="tabpanel" aria-labelledby="career-tab">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="info-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="info-section-title mb-0">Transfers</h3>
+                        {% if user.is_staff %}
+                            <a href="{% url 'employees:transfer_create' employee_id=employee.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>New Transfer
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if transfers %}
+                        <div class="timeline">
+                            {% for transfer in transfers %}
+                                <div class="timeline-item">
+                                    <div class="timeline-badge"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">
+                                            {% if transfer.from_department and transfer.to_department %}
+                                                {{ transfer.from_department.name }} → {{ transfer.to_department.name }}
+                                            {% elif transfer.from_store and transfer.to_store %}
+                                                {{ transfer.from_store.name }} → {{ transfer.to_store.name }}
+                                            {% else %}
+                                                Department/Store Transfer
+                                            {% endif %}
+                                        </div>
+                                        <div class="timeline-date">
+                                            <i class="fas fa-calendar me-1"></i>{{ transfer.effective_date|date:"F d, Y" }}
+                                            {% if transfer.is_completed %}
+                                                <span class="badge bg-success ms-2">Completed</span>
+                                            {% else %}
+                                                <span class="badge bg-warning ms-2">Pending</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="timeline-text">{{ transfer.reason }}</div>
+                                        
+                                        {% if user.is_staff and not transfer.is_completed %}
+                                            <div class="mt-2">
+                                                <a href="{% url 'employees:transfer_complete' transfer_id=transfer.id %}" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check me-1"></i>Complete Transfer
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No transfer history found.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="info-section mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="info-section-title mb-0">Promotions</h3>
+                        {% if user.is_staff %}
+                            <a href="{% url 'employees:promotion_create' employee_id=employee.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>New Promotion
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if promotions %}
+                        <div class="timeline">
+                            {% for promotion in promotions %}
+                                <div class="timeline-item">
+                                    <div class="timeline-badge"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">
+                                            {{ promotion.from_role.name }} → {{ promotion.to_role.name }}
+                                        </div>
+                                        <div class="timeline-date">
+                                            <i class="fas fa-calendar me-1"></i>{{ promotion.effective_date|date:"F d, Y" }}
+                                            {% if promotion.is_completed %}
+                                                <span class="badge bg-success ms-2">Completed</span>
+                                            {% else %}
+                                                <span class="badge bg-warning ms-2">Pending</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="timeline-text">{{ promotion.reason }}</div>
+                                        
+                                        {% if promotion.salary_change %}
+                                            <div class="mt-1">
+                                                <strong>Salary Change:</strong> {{ promotion.salary_change }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if user.is_staff and not promotion.is_completed %}
+                                            <div class="mt-2">
+                                                <a href="{% url 'employees:promotion_complete' promotion_id=promotion.id %}" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check me-1"></i>Complete Promotion
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No promotion history found.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="info-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="info-section-title mb-0">Performance Reviews</h3>
+                        {% if user.is_staff %}
+                            <a href="{% url 'employees:review_create' employee_id=employee.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>New Review
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if performance_reviews %}
+                        <div class="accordion" id="reviewAccordion">
+                            {% for review in performance_reviews %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ review.id }}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ review.id }}" aria-expanded="false" aria-controls="collapse{{ review.id }}">
+                                            <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                                <div>
+                                                    <span class="fw-bold">{{ review.get_review_type_display }}</span>
+                                                    <span class="text-muted ms-2">
+                                                        {{ review.review_period_start|date:"M d, Y" }} - {{ review.review_period_end|date:"M d, Y" }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span class="badge bg-primary">Rating: {{ review.get_overall_rating_display }}</span>
+                                                    {% if review.is_acknowledged_by_employee %}
+                                                        <span class="badge bg-success ms-1">Acknowledged</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ review.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ review.id }}" data-bs-parent="#reviewAccordion">
+                                        <div class="accordion-body">
+                                            <div class="mb-3">
+                                                <strong>Reviewer:</strong>
+                                                {% if review.reviewer %}
+                                                    <a href="{% url 'employees:detail' employee_id=review.reviewer.id %}">
+                                                        {{ review.reviewer.full_name }}
+                                                    </a>
+                                                {% else %}
+                                                    Not Assigned
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if review.strengths %}
+                                                <div class="mb-3">
+                                                    <strong>Strengths:</strong>
+                                                    <p>{{ review.strengths }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if review.areas_for_improvement %}
+                                                <div class="mb-3">
+                                                    <strong>Areas for Improvement:</strong>
+                                                    <p>{{ review.areas_for_improvement }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if review.goals_for_next_period %}
+                                                <div class="mb-3">
+                                                    <strong>Goals for Next Period:</strong>
+                                                    <p>{{ review.goals_for_next_period }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if review.employee_comments %}
+                                                <div class="mb-3">
+                                                    <strong>Employee Comments:</strong>
+                                                    <p>{{ review.employee_comments }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <div class="d-flex justify-content-end mt-3">
+                                                <a href="{% url 'employees:review_detail' review_id=review.id %}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>View Full Review
+                                                </a>
+                                                
+                                                {% if user.employee_profile == employee and not review.is_acknowledged_by_employee %}
+                                                    <a href="{% url 'employees:review_acknowledge' review_id=review.id %}" class="btn btn-success btn-sm ms-2">
+                                                        <i class="fas fa-check me-1"></i>Acknowledge
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No performance reviews found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the tab from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        
+        if (tab) {
+            // Activate the tab
+            const tabElement = document.querySelector(`#${tab}-tab`);
+            if (tabElement) {
+                const tabTrigger = new bootstrap.Tab(tabElement);
+                tabTrigger.show();
+            }
+        }
+        
+        // Update URL when tab changes
+        const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (event) {
+                const id = event.target.id.replace('-tab', '');
+                const url = new URL(window.location);
+                url.searchParams.set('tab', id);
+                window.history.replaceState({}, '', url);
+            });
+        });
+    });
+</script>
+{% endblock %}

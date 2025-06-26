@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Dashboard - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .quick-action-btn {
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .quick-action-btn i {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    .chart-container {
+        height: 250px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </h1>
+        <p class="text-muted">Welcome back, {{ user.first_name|default:user.username }}! Today is {% now "l, F j, Y" %}</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Employees</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_employees|default:"215" }}</div>
+                        <div class="text-xs text-success mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>5% from last month
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Attendance Rate</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_rate|default:"92" }}%</div>
+                        <div class="text-xs text-success mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>2% from last week
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Pending Leave Requests</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_leaves|default:"18" }}</div>
+                        <div class="text-xs text-danger mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>3 more than yesterday
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-minus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Payroll Processing</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ payroll_status|default:"In Progress" }}</div>
+                        <div class="text-xs text-muted mt-2">
+                            <i class="fas fa-clock me-1"></i>Due in 5 days
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 col-sm-4 mb-3">
+                        <a href="{% url 'employees:create' %}" class="btn btn-light btn-block quick-action-btn shadow-sm">
+                            <i class="fas fa-user-plus text-primary"></i>
+                            Add Employee
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-sm-4 mb-3">
+                        <a href="{% url 'attendance:mark' %}" class="btn btn-light btn-block quick-action-btn shadow-sm">
+                            <i class="fas fa-clipboard-check text-success"></i>
+                            Mark Attendance
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-sm-4 mb-3">
+                        <a href="{% url 'payroll:process' %}" class="btn btn-light btn-block quick-action-btn shadow-sm">
+                            <i class="fas fa-file-invoice-dollar text-warning"></i>
+                            Process Payroll
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-sm-4 mb-3">
+                        <a href="{% url 'reports:generate' %}" class="btn btn-light btn-block quick-action-btn shadow-sm">
+                            <i class="fas fa-chart-bar text-info"></i>
+                            Generate Reports
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-sm-4 mb-3">
+                        <a href="{% url 'accommodation:manage' %}" class="btn btn-light btn-block quick-action-btn shadow-sm">
+                            <i class="fas fa-home text-danger"></i>
+                            Manage Housing
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-sm-4 mb-3">
+                        <a href="{% url 'tracking:view' %}" class="btn btn-light btn-block quick-action-btn shadow-sm">
+                            <i class="fas fa-map-marker-alt text-secondary"></i>
+                            Track Employees
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Recent Activity -->
+<div class="row">
+    <!-- Department Distribution Chart -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Employee Distribution by Department</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Trends -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Attendance Trends (Last 7 Days)</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Employees -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recently Added Employees</h6>
+                <a href="{% url 'employees:list' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Joined Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in recent_employees|default:'' %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'employees:detail' employee_id=employee.id %}">
+                                        {{ employee.full_name }}
+                                    </a>
+                                </td>
+                                <td>{{ employee.department.name }}</td>
+                                <td>{{ employee.date_joined }}</td>
+                                <td>
+                                    <span class="badge bg-{% if employee.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ employee.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <!-- Sample data if no employees -->
+                            <tr>
+                                <td><a href="#">John Smith</a></td>
+                                <td>Engineering</td>
+                                <td>Jun 20, 2025</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td><a href="#">Sarah Johnson</a></td>
+                                <td>Marketing</td>
+                                <td>Jun 18, 2025</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td><a href="#">Michael Brown</a></td>
+                                <td>Finance</td>
+                                <td>Jun 15, 2025</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Leave Requests -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Pending Leave Requests</h6>
+                <a href="{% url 'attendance:leaves' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in pending_leaves_list|default:'' %}
+                            <tr>
+                                <td>{{ leave.employee.full_name }}</td>
+                                <td>{{ leave.get_leave_type_display }}</td>
+                                <td>{{ leave.start_date }}</td>
+                                <td>{{ leave.end_date }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-success">Approve</a>
+                                        <a href="#" class="btn btn-danger">Reject</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <!-- Sample data if no leave requests -->
+                            <tr>
+                                <td>David Wilson</td>
+                                <td>Sick Leave</td>
+                                <td>Jun 25, 2025</td>
+                                <td>Jun 27, 2025</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-success">Approve</a>
+                                        <a href="#" class="btn btn-danger">Reject</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Emily Davis</td>
+                                <td>Vacation</td>
+                                <td>Jul 1, 2025</td>
+                                <td>Jul 5, 2025</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-success">Approve</a>
+                                        <a href="#" class="btn btn-danger">Reject</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Department Distribution Chart
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const departmentChart = new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Engineering', 'Marketing', 'Finance', 'HR', 'Operations', 'Sales'],
+            datasets: [{
+                data: [65, 30, 25, 15, 45, 35],
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+                ],
+                hoverBackgroundColor: [
+                    '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f'
+                ],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // Attendance Trends Chart
+    const attCtx = document.getElementById('attendanceChart').getContext('2d');
+    const attendanceChart = new Chart(attCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jun 17', 'Jun 18', 'Jun 19', 'Jun 20', 'Jun 21', 'Jun 22', 'Jun 23'],
+            datasets: [{
+                label: 'Present',
+                data: [195, 200, 185, 205, 190, 0, 210],
+                backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                borderColor: 'rgba(28, 200, 138, 1)',
+                pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true
+            }, {
+                label: 'Absent',
+                data: [20, 15, 30, 10, 25, 0, 5],
+                backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                borderColor: 'rgba(231, 74, 59, 1)',
+                pointBackgroundColor: 'rgba(231, 74, 59, 1)',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

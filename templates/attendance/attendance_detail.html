@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Attendance Detail - {{ record.employee.full_name }} - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .info-row {
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.25em 0.6em;
+        border-radius: 0.25rem;
+    }
+    .status-present {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    .status-absent {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    .status-half_day {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+    .status-work_from_home {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+    .status-field_work {
+        background-color: #dbe4ff;
+        color: #3a57e8;
+    }
+    .status-leave {
+        background-color: #e2d9ff;
+        color: #6f42c1;
+    }
+    
+    .employee-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .map-container {
+        height: 300px;
+        border-radius: 0.35rem;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+    
+    .log-item {
+        border-left: 3px solid var(--primary);
+        padding-left: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    .log-item.check_in {
+        border-left-color: #1cc88a;
+    }
+    .log-item.check_out {
+        border-left-color: #e74a3b;
+    }
+    .log-item-time {
+        font-weight: 600;
+        color: #6e707e;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'attendance:dashboard' %}">Attendance</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'attendance:list' %}">Records</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Detail</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-clipboard-list me-2"></i>Attendance Detail
+    </h1>
+    <div>
+        <a href="{% url 'attendance:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to List
+        </a>
+        {% if user.is_staff %}
+        <a href="{% url 'attendance:edit' record_id=record.id %}" class="btn btn-primary">
+            <i class="fas fa-edit me-1"></i>Edit Record
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    {% if record.employee.profile_picture %}
+                        <img src="{{ record.employee.profile_picture.url }}" alt="{{ record.employee.full_name }}" class="employee-avatar me-3">
+                    {% else %}
+                        <div class="bg-primary text-white rounded-circle employee-avatar me-3 d-flex align-items-center justify-content-center">
+                            <span class="h4">{{ record.employee.first_name|first }}{{ record.employee.last_name|first }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0"><a href="{% url 'employees:detail' employee_id=record.employee.id %}">{{ record.employee.full_name }}</a></h5>
+                        <p class="text-muted mb-0">{{ record.employee.employee_id }} | {{ record.employee.role.name|default:"N/A" }}</p>
+                    </div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Department</div>
+                    <div class="col-sm-8">{{ record.employee.department.name|default:"N/A" }}</div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Official Email</div>
+                    <div class="col-sm-8"><a href="mailto:{{ record.employee.official_email }}">{{ record.employee.official_email }}</a></div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Primary Phone</div>
+                    <div class="col-sm-8"><a href="tel:{{ record.employee.primary_phone }}">{{ record.employee.primary_phone }}</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Attendance Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Date</div>
+                    <div class="col-sm-8">{{ record.date|date:"F d, Y" }}</div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Check-in Time</div>
+                    <div class="col-sm-8">{{ record.time_in|time:"H:i:s"|default:"--" }}</div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Check-out Time</div>
+                    <div class="col-sm-8">{{ record.time_out|time:"H:i:s"|default:"--" }}</div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Duration</div>
+                    <div class="col-sm-8">{{ record.duration|default:"--" }}</div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Attendance Type</div>
+                    <div class="col-sm-8">{{ record.get_attendance_type_display|default:"--" }}</div>
+                </div>
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Status</div>
+                    <div class="col-sm-8">
+                        <span class="status-badge status-{{ record.status }}">
+                            {{ record.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% if record.remarks %}
+                <div class="row info-row">
+                    <div class="col-sm-4 info-label">Remarks</div>
+                    <div class="col-sm-8">{{ record.remarks|linebreaksbr }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Location Details</h6>
+            </div>
+            <div class="card-body">
+                {% if record.latitude and record.longitude %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Latitude</div>
+                        <div class="col-sm-8">{{ record.latitude }}</div>
+                    </div>
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Longitude</div>
+                        <div class="col-sm-8">{{ record.longitude }}</div>
+                    </div>
+                    {% if record.accuracy %}
+                    <div class="row info-row">
+                        <div class="col-sm-4 info-label">Accuracy</div>
+                        <div class="col-sm-8">{{ record.accuracy }} meters</div>
+                    </div>
+                    {% endif %}
+                    <div class="map-container" id="location-map"></div>
+                {% else %}
+                    <p class="text-muted">No location data available for this record.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Check-in/Check-out Logs</h6>
+            </div>
+            <div class="card-body">
+                {% if record.logs %}
+                    {% for log in record.logs %}
+                        <div class="log-item {% if log.event_type == 'check_in' %}check_in{% elif log.event_type == 'check_out' %}check_out{% endif %}">
+                            <div class="log-item-time">{{ log.timestamp|date:"F d, Y" }} at {{ log.timestamp|time:"H:i:s" }}</div>
+                            <p class="mb-0">
+                                {% if log.event_type == 'check_in' %}
+                                    <i class="fas fa-sign-in-alt text-success me-1"></i>Checked In
+                                {% elif log.event_type == 'check_out' %}
+                                    <i class="fas fa-sign-out-alt text-danger me-1"></i>Checked Out
+                                {% else %}
+                                    {{ log.get_event_type_display }}
+                                {% endif %}
+                                {% if log.location_name %}({{ log.location_name }}){% endif %}
+                            </p>
+                            {% if log.remarks %}<small class="text-muted">{{ log.remarks }}</small>{% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No detailed check-in/check-out logs available for this record.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const latitude = parseFloat("{{ record.latitude|default:'0' }}");
+        const longitude = parseFloat("{{ record.longitude|default:'0' }}");
+        const accuracy = parseFloat("{{ record.accuracy|default:'0' }}");
+        const mapContainer = document.getElementById('location-map');
+
+        if (mapContainer && latitude !== 0 && longitude !== 0) {
+            const map = L.map('location-map').setView([latitude, longitude], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            L.marker([latitude, longitude]).addTo(map)
+                .bindPopup('Recorded Location')
+                .openPopup();
+
+            if (accuracy > 0) {
+                L.circle([latitude, longitude], {
+                    radius: accuracy,
+                    color: '#4e73df',
+                    fillColor: '#4e73df',
+                    fillOpacity: 0.2
+                }).addTo(map);
+            }
+        }
+    });
+</script>
+{% endblock %}

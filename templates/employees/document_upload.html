@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Upload Document for {{ employee.full_name }} - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .required-field label::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .file-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin-top: 1rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'employees:list' %}">Employees</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'employees:detail' employee_id=employee.id %}">{{ employee.full_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Upload Document</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-upload me-1"></i>Upload Document for {{ employee.full_name }}
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3 class="form-section-title">Document Details</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_document_type" class="form-label">Document Type</label>
+                        {{ form.document_type }}
+                        {% if form.document_type.errors %}
+                            <div class="invalid-feedback">{{ form.document_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_title" class="form-label">Title</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="invalid-feedback">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_file" class="form-label">File</label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="invalid-feedback">{{ form.file.errors.0 }}</div>
+                        {% endif %}
+                        <img id="file-preview" class="file-preview d-none" src="#" alt="File Preview" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_expiry_date" class="form-label">Expiry Date (Optional)</label>
+                        {{ form.expiry_date }}
+                        {% if form.expiry_date.errors %}
+                            <div class="invalid-feedback">{{ form.expiry_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'employees:detail' employee_id=employee.id %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload me-1"></i>Upload Document
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+
+        // File preview
+        const fileInput = document.getElementById('id_file');
+        const filePreview = document.getElementById('file-preview');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const fileType = file.type;
+                    
+                    if (fileType.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            filePreview.src = e.target.result;
+                            filePreview.classList.remove('d-none');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        filePreview.classList.add('d-none');
+                        filePreview.src = '#';
+                    }
+                } else {
+                    filePreview.classList.add('d-none');
+                    filePreview.src = '#';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1294 @@
+{% extends "base.html" %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .help-header {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .help-search {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .help-card {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s;
+    }
+    
+    .help-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .help-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    
+    .faq-category {
+        margin-bottom: 2rem;
+    }
+    
+    .video-tutorial {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .video-thumbnail {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        height: 0;
+        overflow: hidden;
+        background-color: #f8f9fa;
+    }
+    
+    .video-thumbnail img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .video-play-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        background-color: rgba(13, 110, 253, 0.8);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        transition: all 0.3s;
+    }
+    
+    .video-thumbnail:hover .video-play-button {
+        background-color: rgba(13, 110, 253, 1);
+        width: 70px;
+        height: 70px;
+    }
+    
+    .guide-item {
+        border-left: 3px solid #0d6efd;
+        transition: background-color 0.2s;
+    }
+    
+    .guide-item:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .guide-icon {
+        font-size: 2rem;
+        color: #6c757d;
+    }
+    
+    .troubleshooting-item {
+        border-left: 3px solid #dc3545;
+        margin-bottom: 1rem;
+    }
+    
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+    }
+    
+    .nav-pills .nav-link {
+        color: #495057;
+    }
+    
+    .nav-pills .nav-link:hover:not(.active) {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Help Header -->
+    <div class="help-header text-center">
+        <h1 class="display-5 fw-bold mb-4">How can we help you?</h1>
+        
+        <div class="help-search mb-4">
+            <form id="searchHelpForm">
+                <div class="input-group">
+                    <input type="text" class="form-control form-control-lg" placeholder="Search for help topics..." id="helpSearchInput">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <a href="#faq-section" class="btn btn-outline-primary">
+                        <i class="bi bi-question-circle"></i> FAQs
+                    </a>
+                    <a href="#guides-section" class="btn btn-outline-primary">
+                        <i class="bi bi-book"></i> User Guides
+                    </a>
+                    <a href="#videos-section" class="btn btn-outline-primary">
+                        <i class="bi bi-play-circle"></i> Video Tutorials
+                    </a>
+                    <a href="#troubleshooting-section" class="btn btn-outline-primary">
+                        <i class="bi bi-tools"></i> Troubleshooting
+                    </a>
+                    <a href="#contact-section" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope"></i> Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Categories -->
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <!-- Sidebar Navigation -->
+            <div class="card sticky-top" style="top: 2rem;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Help Categories</h5>
+                </div>
+                <div class="card-body p-0">
+                    <nav class="nav flex-column nav-pills">
+                        <a class="nav-link active" href="#faq-section">Frequently Asked Questions</a>
+                        <a class="nav-link" href="#guides-section">User Guides & Manuals</a>
+                        <a class="nav-link" href="#videos-section">Video Tutorials</a>
+                        <a class="nav-link" href="#troubleshooting-section">Troubleshooting</a>
+                        <a class="nav-link" href="#contact-section">Contact Support</a>
+                    </nav>
+                    
+                    <div class="p-3 bg-light border-top">
+                        <h6 class="mb-3">Quick Links</h6>
+                        <div class="d-grid gap-2">
+                            <a href="#employees-faq" class="btn btn-sm btn-outline-secondary">Employees</a>
+                            <a href="#attendance-faq" class="btn btn-sm btn-outline-secondary">Attendance</a>
+                            <a href="#payroll-faq" class="btn btn-sm btn-outline-secondary">Payroll</a>
+                            <a href="#accommodation-faq" class="btn btn-sm btn-outline-secondary">Accommodation</a>
+                            <a href="#tracking-faq" class="btn btn-sm btn-outline-secondary">Tracking</a>
+                            <a href="#reports-faq" class="btn btn-sm btn-outline-secondary">Reports</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <!-- FAQ Section -->
+            <section id="faq-section" class="mb-5">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary p-3 rounded text-white me-3">
+                        <i class="bi bi-question-circle fs-3"></i>
+                    </div>
+                    <h2 class="mb-0">Frequently Asked Questions</h2>
+                </div>
+                
+                <ul class="nav nav-tabs mb-4" id="faqTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general-faq" type="button" role="tab" aria-controls="general-faq" aria-selected="true">General</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees-faq" type="button" role="tab" aria-controls="employees-faq" aria-selected="false">Employees</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance-faq" type="button" role="tab" aria-controls="attendance-faq" aria-selected="false">Attendance</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="payroll-tab" data-bs-toggle="tab" data-bs-target="#payroll-faq" type="button" role="tab" aria-controls="payroll-faq" aria-selected="false">Payroll</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="accommodation-tab" data-bs-toggle="tab" data-bs-target="#accommodation-faq" type="button" role="tab" aria-controls="accommodation-faq" aria-selected="false">Accommodation</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tracking-tab" data-bs-toggle="tab" data-bs-target="#tracking-faq" type="button" role="tab" aria-controls="tracking-faq" aria-selected="false">Tracking</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports-faq" type="button" role="tab" aria-controls="reports-faq" aria-selected="false">Reports</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="faqTabsContent">
+                    <!-- General FAQs -->
+                    <div class="tab-pane fade show active" id="general-faq" role="tabpanel" aria-labelledby="general-tab">
+                        <div class="accordion" id="generalAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="general-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#general-collapse-1" aria-expanded="true" aria-controls="general-collapse-1">
+                                        How do I reset my password?
+                                    </button>
+                                </h2>
+                                <div id="general-collapse-1" class="accordion-collapse collapse show" aria-labelledby="general-heading-1" data-bs-parent="#generalAccordion">
+                                    <div class="accordion-body">
+                                        <p>To reset your password:</p>
+                                        <ol>
+                                            <li>Click on the "Forgot Password" link on the login page</li>
+                                            <li>Enter your registered email address</li>
+                                            <li>Check your email for a password reset link</li>
+                                            <li>Click the link and follow instructions to create a new password</li>
+                                        </ol>
+                                        <p>If you don't receive the email within a few minutes, check your spam folder or contact your system administrator.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="general-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general-collapse-2" aria-expanded="false" aria-controls="general-collapse-2">
+                                        How do I update my profile information?
+                                    </button>
+                                </h2>
+                                <div id="general-collapse-2" class="accordion-collapse collapse" aria-labelledby="general-heading-2" data-bs-parent="#generalAccordion">
+                                    <div class="accordion-body">
+                                        <p>You can update your profile information by following these steps:</p>
+                                        <ol>
+                                            <li>Click on your profile picture in the top-right corner</li>
+                                            <li>Select "My Profile" from the dropdown menu</li>
+                                            <li>Click the "Edit Profile" button</li>
+                                            <li>Update your information in the form provided</li>
+                                            <li>Click "Save Changes" to apply your updates</li>
+                                        </ol>
+                                        <p>Note: Some information may require HR approval to change. Contact your HR representative for assistance with these fields.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="general-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general-collapse-3" aria-expanded="false" aria-controls="general-collapse-3">
+                                        How do I navigate the dashboard?
+                                    </button>
+                                </h2>
+                                <div id="general-collapse-3" class="accordion-collapse collapse" aria-labelledby="general-heading-3" data-bs-parent="#generalAccordion">
+                                    <div class="accordion-body">
+                                        <p>The dashboard provides an overview of key information and quick access to various features:</p>
+                                        <ul>
+                                            <li><strong>Top Navigation Bar:</strong> Access your profile, notifications, and logout options</li>
+                                            <li><strong>Side Navigation:</strong> Navigate between different modules (Employees, Attendance, Payroll, etc.)</li>
+                                            <li><strong>Dashboard Widgets:</strong> View key metrics and statistics at a glance</li>
+                                            <li><strong>Recent Notifications:</strong> See your latest notifications</li>
+                                            <li><strong>Quick Actions:</strong> Perform common tasks without navigating to specific modules</li>
+                                        </ul>
+                                        <p>You can customize your dashboard view by clicking the "Customize" button in the top-right corner of each widget.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="general-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general-collapse-4" aria-expanded="false" aria-controls="general-collapse-4">
+                                        What are the system requirements?
+                                    </button>
+                                </h2>
+                                <div id="general-collapse-4" class="accordion-collapse collapse" aria-labelledby="general-heading-4" data-bs-parent="#generalAccordion">
+                                    <div class="accordion-body">
+                                        <p>The HR Management System works best with:</p>
+                                        <ul>
+                                            <li><strong>Web Browsers:</strong> Chrome (recommended), Firefox, Safari, or Edge (latest versions)</li>
+                                            <li><strong>Internet Connection:</strong> Stable broadband connection</li>
+                                            <li><strong>Screen Resolution:</strong> Minimum 1280x720 pixels</li>
+                                            <li><strong>Mobile Devices:</strong> iOS 13+ or Android 9+</li>
+                                        </ul>
+                                        <p>For optimal performance, we recommend using Google Chrome and keeping your browser updated to the latest version.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Employees FAQs -->
+                    <div class="tab-pane fade" id="employees-faq" role="tabpanel" aria-labelledby="employees-tab">
+                        <div class="accordion" id="employeesAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="employees-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#employees-collapse-1" aria-expanded="true" aria-controls="employees-collapse-1">
+                                        How do I add a new employee?
+                                    </button>
+                                </h2>
+                                <div id="employees-collapse-1" class="accordion-collapse collapse show" aria-labelledby="employees-heading-1" data-bs-parent="#employeesAccordion">
+                                    <div class="accordion-body">
+                                        <p>To add a new employee to the system:</p>
+                                        <ol>
+                                            <li>Navigate to the Employees module</li>
+                                            <li>Click the "Add Employee" button</li>
+                                            <li>Fill in the required information across all tabs (Personal, Contact, Employment, etc.)</li>
+                                            <li>Upload any required documents</li>
+                                            <li>Click "Save" to create the employee record</li>
+                                        </ol>
+                                        <p>The system will automatically generate an employee ID and create login credentials that will be sent to the employee's email address.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="employees-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#employees-collapse-2" aria-expanded="false" aria-controls="employees-collapse-2">
+                                        How do I upload employee documents?
+                                    </button>
+                                </h2>
+                                <div id="employees-collapse-2" class="accordion-collapse collapse" aria-labelledby="employees-heading-2" data-bs-parent="#employeesAccordion">
+                                    <div class="accordion-body">
+                                        <p>To upload documents for an employee:</p>
+                                        <ol>
+                                            <li>Go to the employee's profile page</li>
+                                            <li>Click on the "Documents" tab</li>
+                                            <li>Click "Upload Document" button</li>
+                                            <li>Select the document type from the dropdown</li>
+                                            <li>Choose the file from your computer</li>
+                                            <li>Add any relevant details like expiry date or description</li>
+                                            <li>Click "Upload" to save the document</li>
+                                        </ol>
+                                        <p>Supported file formats include PDF, DOC/DOCX, JPG, PNG, and TIF. Maximum file size is 10MB per document.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="employees-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#employees-collapse-3" aria-expanded="false" aria-controls="employees-collapse-3">
+                                        How do I transfer an employee to another department?
+                                    </button>
+                                </h2>
+                                <div id="employees-collapse-3" class="accordion-collapse collapse" aria-labelledby="employees-heading-3" data-bs-parent="#employeesAccordion">
+                                    <div class="accordion-body">
+                                        <p>To transfer an employee to another department:</p>
+                                        <ol>
+                                            <li>Navigate to the employee's profile</li>
+                                            <li>Click on the "Employment" tab</li>
+                                            <li>Click "Initiate Transfer" button</li>
+                                            <li>Select the new department from the dropdown</li>
+                                            <li>Enter the effective date of transfer</li>
+                                            <li>Provide a reason for the transfer</li>
+                                            <li>Click "Submit Transfer Request"</li>
+                                        </ol>
+                                        <p>The transfer request will be sent to the appropriate managers for approval. Once approved, the employee's department will be updated automatically on the effective date.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="employees-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#employees-collapse-4" aria-expanded="false" aria-controls="employees-collapse-4">
+                                        How do I terminate an employee?
+                                    </button>
+                                </h2>
+                                <div id="employees-collapse-4" class="accordion-collapse collapse" aria-labelledby="employees-heading-4" data-bs-parent="#employeesAccordion">
+                                    <div class="accordion-body">
+                                        <p>To process an employee termination:</p>
+                                        <ol>
+                                            <li>Navigate to the employee's profile</li>
+                                            <li>Click on the "Employment" tab</li>
+                                            <li>Click "Initiate Termination" button</li>
+                                            <li>Enter the last working date</li>
+                                            <li>Select the reason for termination from the dropdown</li>
+                                            <li>Complete the exit checklist</li>
+                                            <li>Upload any required termination documents</li>
+                                            <li>Click "Submit Termination Request"</li>
+                                        </ol>
+                                        <p>Note: Terminating an employee will trigger several automated processes including final settlement calculation, access revocation, and exit interviews. Ensure all required approvals are obtained before initiating termination.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance FAQs -->
+                    <div class="tab-pane fade" id="attendance-faq" role="tabpanel" aria-labelledby="attendance-tab">
+                        <div class="accordion" id="attendanceAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="attendance-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#attendance-collapse-1" aria-expanded="true" aria-controls="attendance-collapse-1">
+                                        How do I mark my attendance?
+                                    </button>
+                                </h2>
+                                <div id="attendance-collapse-1" class="accordion-collapse collapse show" aria-labelledby="attendance-heading-1" data-bs-parent="#attendanceAccordion">
+                                    <div class="accordion-body">
+                                        <p>There are multiple ways to mark your attendance:</p>
+                                        <ol>
+                                            <li><strong>Web Check-in:</strong> Click the "Check In" button on your dashboard</li>
+                                            <li><strong>Mobile App:</strong> Use the mobile app's check-in feature with location verification</li>
+                                            <li><strong>QR Code:</strong> Scan the office QR code using the mobile app</li>
+                                            <li><strong>Biometric:</strong> Use the biometric scanner if available at your location</li>
+                                        </ol>
+                                        <p>Remember to also check out at the end of your workday using the same method you used to check in.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="attendance-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#attendance-collapse-2" aria-expanded="false" aria-controls="attendance-collapse-2">
+                                        How do I apply for leave?
+                                    </button>
+                                </h2>
+                                <div id="attendance-collapse-2" class="accordion-collapse collapse" aria-labelledby="attendance-heading-2" data-bs-parent="#attendanceAccordion">
+                                    <div class="accordion-body">
+                                        <p>To apply for leave:</p>
+                                        <ol>
+                                            <li>Navigate to the Attendance module</li>
+                                            <li>Click on "Apply for Leave" button</li>
+                                            <li>Select the leave type (Casual, Sick, Earned, etc.)</li>
+                                            <li>Enter the start and end dates</li>
+                                            <li>Specify if it's a full day or half day leave</li>
+                                            <li>Provide a reason for the leave</li>
+                                            <li>Upload any supporting documents if required</li>
+                                            <li>Click "Submit" to send the leave request</li>
+                                        </ol>
+                                        <p>Your leave request will be sent to your reporting manager for approval. You can check the status of your leave requests in the "My Leaves" section.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="attendance-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#attendance-collapse-3" aria-expanded="false" aria-controls="attendance-collapse-3">
+                                        How do I approve leave requests as a manager?
+                                    </button>
+                                </h2>
+                                <div id="attendance-collapse-3" class="accordion-collapse collapse" aria-labelledby="attendance-heading-3" data-bs-parent="#attendanceAccordion">
+                                    <div class="accordion-body">
+                                        <p>As a manager, you can approve leave requests by:</p>
+                                        <ol>
+                                            <li>Navigate to the Attendance module</li>
+                                            <li>Click on "Leave Approvals" tab</li>
+                                            <li>View the list of pending leave requests from your team members</li>
+                                            <li>Click on a request to view details</li>
+                                            <li>Check the employee's leave balance and request details</li>
+                                            <li>Click "Approve" or "Reject" based on your decision</li>
+                                            <li>Add comments if necessary, especially for rejections</li>
+                                            <li>Click "Submit" to confirm your decision</li>
+                                        </ol>
+                                        <p>The employee will be notified of your decision automatically. You can also set up delegation for leave approvals when you're on leave yourself.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="attendance-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#attendance-collapse-4" aria-expanded="false" aria-controls="attendance-collapse-4">
+                                        How do I correct an attendance mistake?
+                                    </button>
+                                </h2>
+                                <div id="attendance-collapse-4" class="accordion-collapse collapse" aria-labelledby="attendance-heading-4" data-bs-parent="#attendanceAccordion">
+                                    <div class="accordion-body">
+                                        <p>If you need to correct an attendance record:</p>
+                                        <ol>
+                                            <li>Navigate to the Attendance module</li>
+                                            <li>Click on "My Attendance" tab</li>
+                                            <li>Locate the incorrect attendance record</li>
+                                            <li>Click on the "Request Correction" button</li>
+                                            <li>Enter the correct check-in/check-out times</li>
+                                            <li>Provide a reason for the correction</li>
+                                            <li>Submit the correction request</li>
+                                        </ol>
+                                        <p>Your request will be sent to your manager for approval. Once approved, your attendance record will be updated accordingly. Note that attendance correction requests older than 30 days may require additional approval from HR.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payroll FAQs -->
+                    <div class="tab-pane fade" id="payroll-faq" role="tabpanel" aria-labelledby="payroll-tab">
+                        <div class="accordion" id="payrollAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="payroll-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#payroll-collapse-1" aria-expanded="true" aria-controls="payroll-collapse-1">
+                                        How do I view my salary slip?
+                                    </button>
+                                </h2>
+                                <div id="payroll-collapse-1" class="accordion-collapse collapse show" aria-labelledby="payroll-heading-1" data-bs-parent="#payrollAccordion">
+                                    <div class="accordion-body">
+                                        <p>To view and download your salary slip:</p>
+                                        <ol>
+                                            <li>Navigate to the Payroll module</li>
+                                            <li>Click on "My Salary" tab</li>
+                                            <li>Select the month and year from the dropdown</li>
+                                            <li>Click "View Salary Slip" button</li>
+                                            <li>You can download the salary slip as PDF by clicking the "Download" button</li>
+                                        </ol>
+                                        <p>Salary slips are typically available within 3 days after the salary is credited to your account. You can access salary slips for the past 24 months.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="payroll-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#payroll-collapse-2" aria-expanded="false" aria-controls="payroll-collapse-2">
+                                        How do I update my bank account details?
+                                    </button>
+                                </h2>
+                                <div id="payroll-collapse-2" class="accordion-collapse collapse" aria-labelledby="payroll-heading-2" data-bs-parent="#payrollAccordion">
+                                    <div class="accordion-body">
+                                        <p>To update your bank account information:</p>
+                                        <ol>
+                                            <li>Navigate to your Profile page</li>
+                                            <li>Click on the "Financial" tab</li>
+                                            <li>Click "Update Bank Details" button</li>
+                                            <li>Enter your new bank account information</li>
+                                            <li>Upload a canceled cheque or bank statement for verification</li>
+                                            <li>Submit the request</li>
+                                        </ol>
+                                        <p>Your request will be reviewed by the HR/Finance team. Once approved, your bank details will be updated for the next salary cycle. Please ensure you submit changes at least 10 days before the salary processing date.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="payroll-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#payroll-collapse-3" aria-expanded="false" aria-controls="payroll-collapse-3">
+                                        How do I view my tax deductions?
+                                    </button>
+                                </h2>
+                                <div id="payroll-collapse-3" class="accordion-collapse collapse" aria-labelledby="payroll-heading-3" data-bs-parent="#payrollAccordion">
+                                    <div class="accordion-body">
+                                        <p>To view your tax deductions:</p>
+                                        <ol>
+                                            <li>Navigate to the Payroll module</li>
+                                            <li>Click on "Tax Information" tab</li>
+                                            <li>Select the financial year from the dropdown</li>
+                                            <li>View the detailed breakdown of your tax deductions</li>
+                                            <li>You can download your Form 16 and other tax documents from this page</li>
+                                        </ol>
+                                        <p>The system calculates tax based on your salary structure and the tax declarations you've submitted. If you notice any discrepancies, please contact the Finance team.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="payroll-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#payroll-collapse-4" aria-expanded="false" aria-controls="payroll-collapse-4">
+                                        How do I submit tax declaration?
+                                    </button>
+                                </h2>
+                                <div id="payroll-collapse-4" class="accordion-collapse collapse" aria-labelledby="payroll-heading-4" data-bs-parent="#payrollAccordion">
+                                    <div class="accordion-body">
+                                        <p>To submit your tax declaration:</p>
+                                        <ol>
+                                            <li>Navigate to the Payroll module</li>
+                                            <li>Click on "Tax Declaration" tab</li>
+                                            <li>Select the financial year</li>
+                                            <li>Fill in details for each applicable section (HRA, LTA, investments, etc.)</li>
+                                            <li>Upload supporting documents for each declaration</li>
+                                            <li>Review all entries before submission</li>
+                                            <li>Click "Submit Declaration" button</li>
+                                        </ol>
+                                        <p>Ensure you submit your declaration before the deadline communicated by the Finance team. You can edit your declaration until it's locked for processing.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Accommodation FAQs -->
+                    <div class="tab-pane fade" id="accommodation-faq" role="tabpanel" aria-labelledby="accommodation-tab">
+                        <div class="accordion" id="accommodationAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accommodation-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accommodation-collapse-1" aria-expanded="true" aria-controls="accommodation-collapse-1">
+                                        How do I apply for company accommodation?
+                                    </button>
+                                </h2>
+                                <div id="accommodation-collapse-1" class="accordion-collapse collapse show" aria-labelledby="accommodation-heading-1" data-bs-parent="#accommodationAccordion">
+                                    <div class="accordion-body">
+                                        <p>To apply for company accommodation:</p>
+                                        <ol>
+                                            <li>Navigate to the Accommodation module</li>
+                                            <li>Click on "Apply for Accommodation" button</li>
+                                            <li>Fill in the application form with your requirements</li>
+                                            <li>Select your preferred location and accommodation type</li>
+                                            <li>Specify your move-in date preference</li>
+                                            <li>Add any special requirements or notes</li>
+                                            <li>Submit your application</li>
+                                        </ol>
+                                        <p>Your application will be reviewed by the Accommodation team. Allocation is based on availability, eligibility, and priority. You'll be notified once your application is processed.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accommodation-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accommodation-collapse-2" aria-expanded="false" aria-controls="accommodation-collapse-2">
+                                        How do I submit a maintenance request?
+                                    </button>
+                                </h2>
+                                <div id="accommodation-collapse-2" class="accordion-collapse collapse" aria-labelledby="accommodation-heading-2" data-bs-parent="#accommodationAccordion">
+                                    <div class="accordion-body">
+                                        <p>To submit a maintenance request for your accommodation:</p>
+                                        <ol>
+                                            <li>Navigate to the Accommodation module</li>
+                                            <li>Click on "My Accommodation" tab</li>
+                                            <li>Click "Submit Maintenance Request" button</li>
+                                            <li>Select the category of the issue (Plumbing, Electrical, etc.)</li>
+                                            <li>Describe the problem in detail</li>
+                                            <li>Upload photos of the issue if applicable</li>
+                                            <li>Indicate the severity of the issue</li>
+                                            <li>Submit your request</li>
+                                        </ol>
+                                        <p>You'll receive updates on the status of your maintenance request through notifications. For emergency issues like water leaks or electrical failures, please also contact the accommodation manager directly.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accommodation-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accommodation-collapse-3" aria-expanded="false" aria-controls="accommodation-collapse-3">
+                                        How do I check out from company accommodation?
+                                    </button>
+                                </h2>
+                                <div id="accommodation-collapse-3" class="accordion-collapse collapse" aria-labelledby="accommodation-heading-3" data-bs-parent="#accommodationAccordion">
+                                    <div class="accordion-body">
+                                        <p>To check out from your company accommodation:</p>
+                                        <ol>
+                                            <li>Navigate to the Accommodation module</li>
+                                            <li>Click on "My Accommodation" tab</li>
+                                            <li>Click "Request Check-out" button</li>
+                                            <li>Enter your planned check-out date</li>
+                                            <li>Provide a reason for check-out</li>
+                                            <li>Submit your request</li>
+                                        </ol>
+                                        <p>The accommodation team will schedule an inspection of the unit before your check-out. Any damages beyond normal wear and tear may be charged. Ensure all personal belongings are removed and the unit is clean before the final inspection.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accommodation-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accommodation-collapse-4" aria-expanded="false" aria-controls="accommodation-collapse-4">
+                                        How are accommodation charges calculated?
+                                    </button>
+                                </h2>
+                                <div id="accommodation-collapse-4" class="accordion-collapse collapse" aria-labelledby="accommodation-heading-4" data-bs-parent="#accommodationAccordion">
+                                    <div class="accordion-body">
+                                        <p>Accommodation charges are calculated based on several factors:</p>
+                                        <ul>
+                                            <li><strong>Accommodation Type:</strong> Different types have different base rates</li>
+                                            <li><strong>Location:</strong> Rates vary by location</li>
+                                            <li><strong>Employee Grade:</strong> Subsidy may apply based on your employment grade</li>
+                                            <li><strong>Occupancy:</strong> Single vs. shared accommodation</li>
+                                            <li><strong>Utilities:</strong> Some utilities may be charged separately or included</li>
+                                        </ul>
+                                        <p>The charges are typically deducted directly from your monthly salary. You can view a detailed breakdown of your accommodation charges in the "My Accommodation" section.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tracking FAQs -->
+                    <div class="tab-pane fade" id="tracking-faq" role="tabpanel" aria-labelledby="tracking-tab">
+                        <div class="accordion" id="trackingAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="tracking-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tracking-collapse-1" aria-expanded="true" aria-controls="tracking-collapse-1">
+                                        How does the location tracking work?
+                                    </button>
+                                </h2>
+                                <div id="tracking-collapse-1" class="accordion-collapse collapse show" aria-labelledby="tracking-heading-1" data-bs-parent="#trackingAccordion">
+                                    <div class="accordion-body">
+                                        <p>The location tracking system works as follows:</p>
+                                        <ul>
+                                            <li>The mobile app uses GPS to track your location during work hours</li>
+                                            <li>Location is only tracked when you're checked in for work</li>
+                                            <li>Your location is updated at regular intervals (typically every 15-30 minutes)</li>
+                                            <li>The system creates a geofence around your assigned work location</li>
+                                            <li>Alerts are generated if you move outside the geofence during work hours</li>
+                                        </ul>
+                                        <p>Your privacy is important - location data is only visible to authorized managers and is automatically purged after 30 days.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="tracking-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tracking-collapse-2" aria-expanded="false" aria-controls="tracking-collapse-2">
+                                        How do I enable/disable location tracking?
+                                    </button>
+                                </h2>
+                                <div id="tracking-collapse-2" class="accordion-collapse collapse" aria-labelledby="tracking-heading-2" data-bs-parent="#trackingAccordion">
+                                    <div class="accordion-body">
+                                        <p>To manage location tracking settings:</p>
+                                        <ol>
+                                            <li>Open the mobile app</li>
+                                            <li>Go to "Settings" > "Location Tracking"</li>
+                                            <li>Toggle the "Enable Location Tracking" switch</li>
+                                        </ol>
+                                        <p>Note: If your role requires location tracking, disabling it may affect your attendance recording and may require manager approval. Some roles cannot disable location tracking due to operational requirements.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="tracking-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tracking-collapse-3" aria-expanded="false" aria-controls="tracking-collapse-3">
+                                        How do I view my team's location?
+                                    </button>
+                                </h2>
+                                <div id="tracking-collapse-3" class="accordion-collapse collapse" aria-labelledby="tracking-heading-3" data-bs-parent="#trackingAccordion">
+                                    <div class="accordion-body">
+                                        <p>As a manager, to view your team's location:</p>
+                                        <ol>
+                                            <li>Navigate to the Tracking module</li>
+                                            <li>Click on "Team Tracking" tab</li>
+                                            <li>View the map showing your team members' current locations</li>
+                                            <li>Use filters to view specific team members or time periods</li>
+                                            <li>Click on a team member's icon to view their details and status</li>
+                                        </ol>
+                                        <p>You can also generate location history reports for your team members for specific date ranges.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="tracking-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tracking-collapse-4" aria-expanded="false" aria-controls="tracking-collapse-4">
+                                        What if my location is not accurate?
+                                    </button>
+                                </h2>
+                                <div id="tracking-collapse-4" class="accordion-collapse collapse" aria-labelledby="tracking-heading-4" data-bs-parent="#trackingAccordion">
+                                    <div class="accordion-body">
+                                        <p>If you're experiencing location accuracy issues:</p>
+                                        <ol>
+                                            <li>Ensure your device's GPS is enabled and functioning properly</li>
+                                            <li>Check if you have granted the app permission to access your location</li>
+                                            <li>Try restarting the app or your device</li>
+                                            <li>Ensure you're not in an area with poor GPS signal (like inside buildings)</li>
+                                            <li>If issues persist, report the problem through the app's "Report Issue" feature</li>
+                                        </ol>
+                                        <p>The system has built-in tolerance for minor GPS inaccuracies. If you're experiencing consistent issues, contact your manager or the IT support team.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reports FAQs -->
+                    <div class="tab-pane fade" id="reports-faq" role="tabpanel" aria-labelledby="reports-tab">
+                        <div class="accordion" id="reportsAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="reports-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#reports-collapse-1" aria-expanded="true" aria-controls="reports-collapse-1">
+                                        How do I generate reports?
+                                    </button>
+                                </h2>
+                                <div id="reports-collapse-1" class="accordion-collapse collapse show" aria-labelledby="reports-heading-1" data-bs-parent="#reportsAccordion">
+                                    <div class="accordion-body">
+                                        <p>To generate reports:</p>
+                                        <ol>
+                                            <li>Navigate to the Reports module</li>
+                                            <li>Select the report category (Attendance, Payroll, Employee, etc.)</li>
+                                            <li>Choose the specific report type</li>
+                                            <li>Set the parameters (date range, departments, employees, etc.)</li>
+                                            <li>Click "Generate Report" button</li>
+                                            <li>View the report online or download in your preferred format</li>
+                                        </ol>
+                                        <p>Reports can be exported in various formats including PDF, Excel, CSV, and HTML. You can also schedule recurring reports to be automatically generated and emailed to you.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="reports-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reports-collapse-2" aria-expanded="false" aria-controls="reports-collapse-2">
+                                        How do I schedule recurring reports?
+                                    </button>
+                                </h2>
+                                <div id="reports-collapse-2" class="accordion-collapse collapse" aria-labelledby="reports-heading-2" data-bs-parent="#reportsAccordion">
+                                    <div class="accordion-body">
+                                        <p>To schedule recurring reports:</p>
+                                        <ol>
+                                            <li>Navigate to the Reports module</li>
+                                            <li>Configure your report as usual</li>
+                                            <li>Instead of "Generate Report", click "Schedule Report" button</li>
+                                            <li>Set the frequency (daily, weekly, monthly)</li>
+                                            <li>Choose the delivery method (email, system notification)</li>
+                                            <li>Specify recipients if sending via email</li>
+                                            <li>Set the start date and end date (if applicable)</li>
+                                            <li>Click "Save Schedule" to confirm</li>
+                                        </ol>
+                                        <p>You can view and manage all your scheduled reports in the "Scheduled Reports" tab. You can edit or delete schedules at any time.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="reports-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reports-collapse-3" aria-expanded="false" aria-controls="reports-collapse-3">
+                                        How do I create custom reports?
+                                    </button>
+                                </h2>
+                                <div id="reports-collapse-3" class="accordion-collapse collapse" aria-labelledby="reports-heading-3" data-bs-parent="#reportsAccordion">
+                                    <div class="accordion-body">
+                                        <p>To create custom reports:</p>
+                                        <ol>
+                                            <li>Navigate to the Reports module</li>
+                                            <li>Click on "Custom Reports" tab</li>
+                                            <li>Click "Create New Report" button</li>
+                                            <li>Select the data source (module)</li>
+                                            <li>Choose the fields you want to include</li>
+                                            <li>Set up filters to narrow down the data</li>
+                                            <li>Configure sorting and grouping options</li>
+                                            <li>Preview the report to ensure it meets your requirements</li>
+                                            <li>Save the report with a descriptive name</li>
+                                        </ol>
+                                        <p>Custom reports can be saved for future use and shared with other users who have appropriate permissions. You can also use the advanced query builder for more complex reports.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="reports-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reports-collapse-4" aria-expanded="false" aria-controls="reports-collapse-4">
+                                        How do I interpret dashboard analytics?
+                                    </button>
+                                </h2>
+                                <div id="reports-collapse-4" class="accordion-collapse collapse" aria-labelledby="reports-heading-4" data-bs-parent="#reportsAccordion">
+                                    <div class="accordion-body">
+                                        <p>To interpret dashboard analytics:</p>
+                                        <ul>
+                                            <li><strong>KPI Cards:</strong> Show key metrics with color-coded indicators (green = good, red = needs attention)</li>
+                                            <li><strong>Trend Charts:</strong> Display data over time to identify patterns and anomalies</li>
+                                            <li><strong>Distribution Charts:</strong> Show breakdowns by department, location, etc.</li>
+                                            <li><strong>Comparison Views:</strong> Compare current period with previous periods</li>
+                                        </ul>
+                                        <p>Hover over any chart element to see detailed information. You can also click on most charts to drill down into more detailed reports. Use the date range selector to adjust the time period for analysis.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- User Guides & Manuals -->
+            <section id="guides-section" class="mb-5">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary p-3 rounded text-white me-3">
+                        <i class="bi bi-book fs-3"></i>
+                    </div>
+                    <h2 class="mb-0">User Guides & Manuals</h2>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="list-group">
+                            <!-- Employee Module Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Employee Module User Guide</h5>
+                                        <p class="mb-1">Complete guide to managing employee records, onboarding, transfers, and terminations.</p>
+                                        <small class="text-muted">Last updated: June 10, 2025 | PDF, 3.2 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Attendance Module Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Attendance & Leave Management Guide</h5>
+                                        <p class="mb-1">Learn how to manage attendance, apply for leave, and handle attendance corrections.</p>
+                                        <small class="text-muted">Last updated: May 25, 2025 | PDF, 2.8 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payroll Module Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Payroll Processing Manual</h5>
+                                        <p class="mb-1">Comprehensive guide to payroll processing, tax calculations, and salary structures.</p>
+                                        <small class="text-muted">Last updated: June 1, 2025 | PDF, 4.5 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Accommodation Module Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Accommodation Management Guide</h5>
+                                        <p class="mb-1">Guide to managing company accommodation, maintenance requests, and check-in/check-out procedures.</p>
+                                        <small class="text-muted">Last updated: April 15, 2025 | PDF, 2.1 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tracking Module Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Location Tracking User Guide</h5>
+                                        <p class="mb-1">Guide to using the location tracking features, privacy settings, and geofencing.</p>
+                                        <small class="text-muted">Last updated: May 5, 2025 | PDF, 1.8 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Reports Module Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Reporting & Analytics Manual</h5>
+                                        <p class="mb-1">Complete guide to generating reports, creating custom reports, and interpreting analytics.</p>
+                                        <small class="text-muted">Last updated: June 15, 2025 | PDF, 3.5 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Admin Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Administrator's Guide</h5>
+                                        <p class="mb-1">Comprehensive guide for system administrators covering configuration, user management, and system maintenance.</p>
+                                        <small class="text-muted">Last updated: June 5, 2025 | PDF, 5.2 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Start Guide -->
+                            <div class="list-group-item guide-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-pdf guide-icon"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">Quick Start Guide</h5>
+                                        <p class="mb-1">A brief introduction to the HR Management System for new users.</p>
+                                        <small class="text-muted">Last updated: June 20, 2025 | PDF, 1.2 MB</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Video Tutorials -->
+            <section id="videos-section" class="mb-5">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary p-3 rounded text-white me-3">
+                        <i class="bi bi-play-circle fs-3"></i>
+                    </div>
+                    <h2 class="mb-0">Video Tutorials</h2>
+                </div>
+                
+                <div class="row">
+                    <!-- Getting Started Video -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card video-tutorial h-100">
+                            <div class="video-thumbnail">
+                                <img src="/static/img/tutorials/getting-started.jpg" alt="Getting Started Tutorial">
+                                <div class="video-play-button">
+                                    <i class="bi bi-play-fill"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Getting Started with HR Management System</h5>
+                                <p class="card-text">Learn the basics of navigating the system and accessing key features.</p>
+                                <small class="text-muted">Duration: 5:32 | Published: June 15, 2025</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Employee Management Video -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card video-tutorial h-100">
+                            <div class="video-thumbnail">
+                                <img src="/static/img/tutorials/employee-management.jpg" alt="Employee Management Tutorial">
+                                <div class="video-play-button">
+                                    <i class="bi bi-play-fill"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Managing Employee Records</h5>
+                                <p class="card-text">Step-by-step guide to adding, editing, and managing employee information.</p>
+                                <small class="text-muted">Duration: 8:45 | Published: May 20, 2025</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance Management Video -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card video-tutorial h-100">
+                            <div class="video-thumbnail">
+                                <img src="/static/img/tutorials/attendance.jpg" alt="Attendance Management Tutorial">
+                                <div class="video-play-button">
+                                    <i class="bi bi-play-fill"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Attendance & Leave Management</h5>
+                                <p class="card-text">Learn how to mark attendance, apply for leave, and approve leave requests.</p>
+                                <small class="text-muted">Duration: 7:18 | Published: June 2, 2025</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payroll Processing Video -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card video-tutorial h-100">
+                            <div class="video-thumbnail">
+                                <img src="/static/img/tutorials/payroll.jpg" alt="Payroll Processing Tutorial">
+                                <div class="video-play-button">
+                                    <i class="bi bi-play-fill"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Payroll Processing</h5>
+                                <p class="card-text">Comprehensive guide to processing payroll and managing salary structures.</p>
+                                <small class="text-muted">Duration: 12:05 | Published: May 25, 2025</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Accommodation Management Video -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card video-tutorial h-100">
+                            <div class="video-thumbnail">
+                                <img src="/static/img/tutorials/accommodation.jpg" alt="Accommodation Management Tutorial">
+                                <div class="video-play-button">
+                                    <i class="bi bi-play-fill"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Accommodation Management</h5>
+                                <p class="card-text">Learn how to manage company accommodation and handle maintenance requests.</p>
+                                <small class="text-muted">Duration: 6:50 | Published: June 10, 2025</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reporting Video -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card video-tutorial h-100">
+                            <div class="video-thumbnail">
+                                <img src="/static/img/tutorials/reporting.jpg" alt="Reporting Tutorial">
+                                <div class="video-play-button">
+                                    <i class="bi bi-play-fill"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Reporting & Analytics</h5>
+                                <p class="card-text">Guide to generating reports and interpreting dashboard analytics.</p>
+                                <small class="text-muted">Duration: 9:22 | Published: June 5, 2025</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-collection-play"></i> View All Tutorials
+                    </a>
+                </div>
+            </section>
+            
+            <!-- Troubleshooting -->
+            <section id="troubleshooting-section" class="mb-5">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary p-3 rounded text-white me-3">
+                        <i class="bi bi-tools fs-3"></i>
+                    </div>
+                    <h2 class="mb-0">Troubleshooting</h2>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="accordion" id="troubleshootingAccordion">
+                            <!-- Login Issues -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleshooting-heading-1">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#troubleshooting-collapse-1" aria-expanded="true" aria-controls="troubleshooting-collapse-1">
+                                        Login Issues
+                                    </button>
+                                </h2>
+                                <div id="troubleshooting-collapse-1" class="accordion-collapse collapse show" aria-labelledby="troubleshooting-heading-1" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <div class="troubleshooting-item p-3 mb-3">
+                                            <h5>I can't log in to my account</h5>
+                                            <p>If you're having trouble logging in, try these steps:</p>
+                                            <ol>
+                                                <li>Ensure you're using the correct email address and password</li>
+                                                <li>Check if Caps Lock is turned on</li>
+                                                <li>Clear your browser cache and cookies</li>
+                                                <li>Try using a different browser</li>
+                                                <li>Use the "Forgot Password" link to reset your password</li>
+                                            </ol>
+                                            <p>If you still can't log in, contact the IT support team.</p>
+                                        </div>
+                                        
+                                        <div class="troubleshooting-item p-3">
+                                            <h5>I'm locked out of my account</h5>
+                                            <p>Your account may be locked after multiple failed login attempts. To resolve this:</p>
+                                            <ol>
+                                                <li>Wait for 30 minutes - the system automatically unlocks accounts after this period</li>
+                                                <li>Contact your manager or the HR team to request an account unlock</li>
+                                                <li>Use the "Forgot Password" feature to reset your password, which will also unlock your account</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile App Issues -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleshooting-heading-2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleshooting-collapse-2" aria-expanded="false" aria-controls="troubleshooting-collapse-2">
+                                        Mobile App Issues
+                                    </button>
+                                </h2>
+                                <div id="troubleshooting-collapse-2" class="accordion-collapse collapse" aria-labelledby="troubleshooting-heading-2" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <div class="troubleshooting-item p-3 mb-3">
+                                            <h5>The app keeps crashing</h5>
+                                            <p>If the mobile app crashes frequently, try these solutions:</p>
+                                            <ol>
+                                                <li>Ensure you have the latest version of the app installed</li>
+                                                <li>Restart your device</li>
+                                                <li>Clear the app cache (Settings > Apps > HR Management > Storage > Clear Cache)</li>
+                                                <li>Uninstall and reinstall the app</li>
+                                                <li>Check if your device meets the minimum requirements</li>
+                                            </ol>
+                                        </div>
+                                        
+                                        <div class="troubleshooting-item p-3">
+                                            <h5>Location tracking is not working</h5>
+                                            <p>If location tracking isn't working properly:</p>
+                                            <ol>
+                                                <li>Ensure location services are enabled on your device</li>
+                                                <li>Grant the app permission to access your location</li>
+                                                <li>Check if you have a stable internet connection</li>
+                                                <li>Ensure battery optimization is disabled for the app</li>
+                                                <li>Restart the app and try again</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Attendance Issues -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleshooting-heading-3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleshooting-collapse-3" aria-expanded="false" aria-controls="troubleshooting-collapse-3">
+                                        Attendance Issues
+                                    </button>
+                                </h2>
+                                <div id="troubleshooting-collapse-3" class="accordion-collapse collapse" aria-labelledby="troubleshooting-heading-3" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <div class="troubleshooting-item p-3 mb-3">
+                                            <h5>My check-in/check-out is not being recorded</h5>
+                                            <p>If your attendance is not being recorded correctly:</p>
+                                            <ol>
+                                                <li>Ensure you have a stable internet connection</li>
+                                                <li>Check if the system shows any error messages</li>
+                                                <li>Verify that your location services are enabled (if using GPS-based check-in)</li>
+                                                <li>Try using a different check-in method if available</li>
+                                                <li>Submit an attendance correction request if the issue persists</li>
+                                            </ol>
+                                        </div>
+                                        
+                                        <div class="troubleshooting-item p-3">
+                                            <h5>My leave balance is incorrect</h5>
+                                            <p>If your leave balance appears incorrect:</p>
+                                            <ol>
+                                                <li>Check your leave history to ensure all leaves are correctly recorded</li>
+                                                <li>Verify your employment start date, as leave accrual is based on this</li>
+                                                <li>Check if any policy changes have affected leave calculations</li>
+                                                <li>Contact HR if you believe there's an error in your leave balance</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payroll Issues -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleshooting-heading-4">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleshooting-collapse-4" aria-expanded="false" aria-controls="troubleshooting-collapse-4">
+                

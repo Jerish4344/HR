@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+    {% if accommodation %}Edit Accommodation: {{ accommodation.name }}{% else %}Add New Accommodation{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .required-field label::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'accommodation:list' %}">Accommodation</a></li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {% if accommodation %}Edit Accommodation{% else %}Add Accommodation{% endif %}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            {% if accommodation %}
+                <i class="fas fa-house-user me-1"></i>Edit Accommodation: {{ accommodation.name }}
+            {% else %}
+                <i class="fas fa-plus me-1"></i>Add New Accommodation
+            {% endif %}
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="post" {% if accommodation %}action="{% url 'accommodation:edit' accommodation_id=accommodation.id %}"{% else %}action="{% url 'accommodation:add' %}"{% endif %} class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <!-- General Information Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">General Information</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="id_name" name="name" value="{{ accommodation.name|default:'' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_type" class="form-label">Type</label>
+                        <select name="type" id="id_type" class="form-select" required>
+                            <option value="">Select Type</option>
+                            {% for type_value, type_label in accommodation_types %}
+                                <option value="{{ type_value }}" {% if accommodation.type == type_value %}selected{% endif %}>
+                                    {{ type_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_location" class="form-label">Location (City/Area)</label>
+                        <input type="text" class="form-control" id="id_location" name="location" value="{{ accommodation.location|default:'' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3 required-field">
+                        <label for="id_address" class="form-label">Full Address</label>
+                        <textarea class="form-control" id="id_address" name="address" rows="3" required>{{ accommodation.address|default:'' }}</textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3 required-field">
+                        <label for="id_capacity" class="form-label">Capacity (People)</label>
+                        <input type="number" class="form-control" id="id_capacity" name="capacity" value="{{ accommodation.capacity|default:'' }}" min="1" required>
+                    </div>
+                    <div class="col-md-4 mb-3 required-field">
+                        <label for="id_rent" class="form-label">Monthly Rent ($)</label>
+                        <input type="number" class="form-control" id="id_rent" name="rent" value="{{ accommodation.rent|default:'' }}" step="0.01" min="0" required>
+                    </div>
+                    <div class="col-md-4 mb-3 required-field">
+                        <label for="id_status" class="form-label">Status</label>
+                        <select name="status" id="id_status" class="form-select" required>
+                            <option value="">Select Status</option>
+                            {% for status_value, status_label in status_choices %}
+                                <option value="{{ status_value }}" {% if accommodation.status == status_value %}selected{% endif %}>
+                                    {{ status_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="id_description" name="description" rows="3">{{ accommodation.description|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Facilities Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">Facilities</h3>
+                <div class="mb-3">
+                    <label class="form-label">Select Available Facilities</label>
+                    <div class="row">
+                        {% for facility_value, facility_label in facility_choices %}
+                            <div class="col-md-4 col-sm-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="facilities" id="id_facility_{{ facility_value }}" value="{{ facility_value }}"
+                                        {% if facility_value in accommodation.facilities|default:'' %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_facility_{{ facility_value }}">
+                                        {{ facility_label }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">Contact Information</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_contact_person" class="form-label">Contact Person</label>
+                        <input type="text" class="form-control" id="id_contact_person" name="contact_person" value="{{ accommodation.contact_person|default:'' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_contact_phone" class="form-label">Contact Phone</label>
+                        <input type="tel" class="form-control" id="id_contact_phone" name="contact_phone" value="{{ accommodation.contact_phone|default:'' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_contact_email" class="form-label">Contact Email</label>
+                        <input type="email" class="form-control" id="id_contact_email" name="contact_email" value="{{ accommodation.contact_email|default:'' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_emergency_phone" class="form-label">Emergency Contact Number</label>
+                        <input type="tel" class="form-control" id="id_emergency_phone" name="emergency_phone" value="{{ accommodation.emergency_phone|default:'' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="id_notes" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="id_notes" name="notes" rows="2">{{ accommodation.notes|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'accommodation:list' %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>{% if accommodation %}Save Changes{% else %}Add Accommodation{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+</script>
+{% endblock %}

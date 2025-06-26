@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Attendance Reports - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        margin-bottom: 1.5rem;
+    }
+    .summary-card {
+        transition: transform 0.3s;
+    }
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'attendance:dashboard' %}">Attendance</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Reports</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-chart-bar me-2"></i>Attendance Reports
+    </h1>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4 filter-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter me-1"></i>Filter Report
+        </h6>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" action="{% url 'reports:attendance_report' %}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.GET.start_date|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.GET.end_date|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="department" class="form-label">Department</label>
+                    <select name="department" id="department" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="employee" class="form-label">Employee</label>
+                    <select name="employee" id="employee" class="form-select">
+                        <option value="">All Employees</option>
+                        {% for emp in employees %}
+                            <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"i" %}selected{% endif %}>{{ emp.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                    <a href="{% url 'reports:attendance_report' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Check-ins</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary_stats.total_checkins|default:"1200" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-sign-in-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Average Work Hours</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary_stats.avg_work_hours|default:"7.8" }} hrs</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total Absences</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary_stats.total_absences|default:"45" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-slash fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Leave Days Taken</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary_stats.leave_days_taken|default:"22" }} days</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-minus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Daily Attendance Trend</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="dailyAttendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Attendance Status Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="statusDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Average Work Hours by Department</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentHoursChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Employee Punctuality (Early/Late Check-ins)</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="punctualityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sample Data (replace with actual data from Django context)
+        const dailyAttendanceData = {
+            labels: ['Jun 17', 'Jun 18', 'Jun 19', 'Jun 20', 'Jun 21', 'Jun 22', 'Jun 23'],
+            present: [195, 200, 185, 205, 190, 0, 210],
+            absent: [20, 15, 30, 10, 25, 0, 5]
+        };
+
+        const statusDistributionData = {
+            labels: ['Present', 'Absent', 'Half Day', 'Work From Home', 'Field Work', 'On Leave'],
+            counts: [800, 50, 30, 100, 70, 40],
+            colors: ['#1cc88a', '#e74a3b', '#f6c23e', '#36b9cc', '#4e73df', '#858796']
+        };
+
+        const departmentHoursData = {
+            labels: ['Engineering', 'Marketing', 'Finance', 'HR', 'Operations'],
+            avgHours: [8.2, 7.5, 7.9, 7.0, 8.5]
+        };
+
+        const punctualityData = {
+            labels: ['Early', 'On Time', 'Late'],
+            counts: [150, 800, 250],
+            colors: ['#1cc88a', '#4e73df', '#e74a3b']
+        };
+
+        // Daily Attendance Trend Chart
+        const dailyAttendanceCtx = document.getElementById('dailyAttendanceChart').getContext('2d');
+        new Chart(dailyAttendanceCtx, {
+            type: 'line',
+            data: {
+                labels: dailyAttendanceData.labels,
+                datasets: [{
+                    label: 'Present',
+                    data: dailyAttendanceData.present,
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    borderColor: 'rgba(28, 200, 138, 1)',
+                    pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true
+                }, {
+                    label: 'Absent',
+                    data: dailyAttendanceData.absent,
+                    backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                    borderColor: 'rgba(231, 74, 59, 1)',
+                    pointBackgroundColor: 'rgba(231, 74, 59, 1)',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Attendance Status Distribution Chart
+        const statusDistributionCtx = document.getElementById('statusDistributionChart').getContext('2d');
+        new Chart(statusDistributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: statusDistributionData.labels,
+                datasets: [{
+                    data: statusDistributionData.counts,
+                    backgroundColor: statusDistributionData.colors,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Average Work Hours by Department Chart
+        const departmentHoursCtx = document.getElementById('departmentHoursChart').getContext('2d');
+        new Chart(departmentHoursCtx, {
+            type: 'bar',
+            data: {
+                labels: departmentHoursData.labels,
+                datasets: [{
+                    label: 'Average Hours',
+                    data: departmentHoursData.avgHours,
+                    backgroundColor: '#4e73df',
+                    borderColor: '#4e73df',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Hours'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Employee Punctuality Chart
+        const punctualityCtx = document.getElementById('punctualityChart').getContext('2d');
+        new Chart(punctualityCtx, {
+            type: 'pie',
+            data: {
+                labels: punctualityData.labels,
+                datasets: [{
+                    data: punctualityData.counts,
+                    backgroundColor: punctualityData.colors,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

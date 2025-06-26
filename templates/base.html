@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HR Management System{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    {% load django_bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header with navigation -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{% url 'core:index' %}">
+                    <i class="fas fa-users-gear me-2"></i>HR Management
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        {% if user.is_authenticated %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'core' %}active{% endif %}" 
+                                   href="{% url 'core:dashboard' %}">
+                                   <i class="fas fa-gauge-high me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'employees' %}active{% endif %}" 
+                                   href="{% url 'employees:list' %}">
+                                   <i class="fas fa-user-tie me-1"></i>Employees
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'attendance' %}active{% endif %}" 
+                                   href="{% url 'attendance:dashboard' %}">
+                                   <i class="fas fa-calendar-check me-1"></i>Attendance
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'payroll' %}active{% endif %}" 
+                                   href="{% url 'payroll:dashboard' %}">
+                                   <i class="fas fa-money-bill-wave me-1"></i>Payroll
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'accommodation' %}active{% endif %}" 
+                                   href="{% url 'accommodation:dashboard' %}">
+                                   <i class="fas fa-house-user me-1"></i>Accommodation
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'tracking' %}active{% endif %}" 
+                                   href="{% url 'tracking:dashboard' %}">
+                                   <i class="fas fa-location-dot me-1"></i>Tracking
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}" 
+                                   href="{% url 'reports:dashboard' %}">
+                                   <i class="fas fa-chart-line me-1"></i>Reports
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <!-- User menu -->
+                    <ul class="navbar-nav">
+                        {% if user.is_authenticated %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                    {% if user.employee_profile %}
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'employees:detail' employee_id=user.employee_profile.id %}">
+                                                <i class="fas fa-id-card me-2"></i>My Profile
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% if user.is_staff %}
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'admin:index' %}">
+                                                <i class="fas fa-cog me-2"></i>Admin Panel
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'core:settings' %}">
+                                            <i class="fas fa-gear me-2"></i>Settings
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'core:help' %}">
+                                            <i class="fas fa-question-circle me-2"></i>Help
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'logout' %}">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'core:notifications' %}">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="badge bg-danger rounded-pill notification-badge">0</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'login' %}">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main content -->
+    <main class="container-fluid py-4">
+        {% bootstrap_messages %}
+        
+        {% block breadcrumb %}{% endblock %}
+        
+        <div class="row">
+            <div class="col-12">
+                {% block content %}
+                    <!-- Main content will be inserted here by child templates -->
+                {% endblock %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">© {% now "Y" %} HR Management System | All rights reserved</span>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="/static/js/main.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

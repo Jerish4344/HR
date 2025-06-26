@@ -1,0 +1,525 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Employee Dashboard - HR Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .birthday-card {
+        border-left: 4px solid #36b9cc;
+    }
+    .review-card {
+        border-left: 4px solid #f6c23e;
+    }
+    .activity-timeline .timeline-item {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 20px;
+    }
+    .activity-timeline .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #e3e6f0;
+    }
+    .activity-timeline .timeline-item:last-child:before {
+        height: 20px;
+    }
+    .activity-timeline .timeline-badge {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        text-align: center;
+        color: white;
+        font-size: 0.7rem;
+        line-height: 20px;
+    }
+    .chart-container {
+        height: 250px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-users me-2"></i>Employee Dashboard
+        </h1>
+        <p class="text-muted">Overview of employee data and activities</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Active Employees</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_employee_count|default:"185" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Inactive Employees</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ inactive_employee_count|default:"30" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            New Hires (This Month)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ new_hires_count|default:"12" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Pending Reviews</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_reviews.count|default:"8" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Employee Data -->
+<div class="row">
+    <!-- Department Distribution Chart -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Employee Distribution by Department</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employment Type Distribution -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Employment Type Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="employmentTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Employees -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recently Added Employees</h6>
+                <a href="{% url 'employees:list' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Role</th>
+                                <th>Joined Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in recent_employees %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if employee.profile_picture %}
+                                            <img src="{{ employee.profile_picture.url }}" alt="{{ employee.full_name }}" class="employee-avatar me-2">
+                                        {% else %}
+                                            <div class="bg-primary text-white rounded-circle employee-avatar me-2 d-flex align-items-center justify-content-center">
+                                                {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                            </div>
+                                        {% endif %}
+                                        <a href="{% url 'employees:detail' employee_id=employee.id %}">
+                                            {{ employee.full_name }}
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>{{ employee.department.name|default:"--" }}</td>
+                                <td>{{ employee.role.name|default:"--" }}</td>
+                                <td>{{ employee.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if employee.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ employee.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <!-- Sample data if no employees -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle employee-avatar me-2 d-flex align-items-center justify-content-center">
+                                            JS
+                                        </div>
+                                        <a href="#">John Smith</a>
+                                    </div>
+                                </td>
+                                <td>Engineering</td>
+                                <td>Software Developer</td>
+                                <td>Jun 20, 2025</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle employee-avatar me-2 d-flex align-items-center justify-content-center">
+                                            SJ
+                                        </div>
+                                        <a href="#">Sarah Johnson</a>
+                                    </div>
+                                </td>
+                                <td>Marketing</td>
+                                <td>Marketing Manager</td>
+                                <td>Jun 18, 2025</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Performance Reviews -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Pending Performance Reviews</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for review in pending_reviews %}
+                    <div class="list-group-item list-group-item-action review-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="{% url 'employees:detail' employee_id=review.employee.id %}">
+                                    {{ review.employee.full_name }}
+                                </a>
+                            </h6>
+                            <small>Due: {{ review.review_period_end|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1">{{ review.review_type }} Review</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">Reviewer: {{ review.reviewer.full_name|default:"Not assigned" }}</small>
+                            <a href="#" class="btn btn-sm btn-primary">Complete Review</a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <!-- Sample data if no reviews -->
+                    <div class="list-group-item list-group-item-action review-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="#">Michael Brown</a>
+                            </h6>
+                            <small>Due: Jun 30, 2025</small>
+                        </div>
+                        <p class="mb-1">Quarterly Performance Review</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">Reviewer: John Manager</small>
+                            <a href="#" class="btn btn-sm btn-primary">Complete Review</a>
+                        </div>
+                    </div>
+                    <div class="list-group-item list-group-item-action review-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="#">Emily Davis</a>
+                            </h6>
+                            <small>Due: Jul 5, 2025</small>
+                        </div>
+                        <p class="mb-1">Annual Performance Review</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">Reviewer: Sarah Manager</small>
+                            <a href="#" class="btn btn-sm btn-primary">Complete Review</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Upcoming Birthdays -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Upcoming Birthdays</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for employee in upcoming_birthdays|default:'' %}
+                    <div class="list-group-item list-group-item-action birthday-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="{% url 'employees:detail' employee_id=employee.id %}">
+                                    {{ employee.full_name }}
+                                </a>
+                            </h6>
+                            <small>{{ employee.date_of_birth|date:"M d" }}</small>
+                        </div>
+                        <p class="mb-1">{{ employee.department.name }} - {{ employee.role.name }}</p>
+                        <small class="text-muted">Turning {{ employee.age_on_birthday }} years old</small>
+                    </div>
+                    {% empty %}
+                    <!-- Sample data if no birthdays -->
+                    <div class="list-group-item list-group-item-action birthday-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="#">Jessica Wilson</a>
+                            </h6>
+                            <small>Jun 25</small>
+                        </div>
+                        <p class="mb-1">Human Resources - HR Manager</p>
+                        <small class="text-muted">Turning 32 years old</small>
+                    </div>
+                    <div class="list-group-item list-group-item-action birthday-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="#">Robert Chen</a>
+                            </h6>
+                            <small>Jun 28</small>
+                        </div>
+                        <p class="mb-1">Engineering - Software Engineer</p>
+                        <small class="text-muted">Turning 27 years old</small>
+                    </div>
+                    <div class="list-group-item list-group-item-action birthday-card">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="#">Aisha Patel</a>
+                            </h6>
+                            <small>Jul 2</small>
+                        </div>
+                        <p class="mb-1">Finance - Financial Analyst</p>
+                        <small class="text-muted">Turning 29 years old</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Activities</h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-timeline">
+                    {% for activity in recent_activities|default:'' %}
+                    <div class="timeline-item">
+                        <div class="timeline-badge bg-{{ activity.badge_color }}">
+                            <i class="fas fa-{{ activity.icon }}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">{{ activity.title }}</h6>
+                            <p class="mb-0">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.timestamp }}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <!-- Sample data if no activities -->
+                    <div class="timeline-item">
+                        <div class="timeline-badge bg-success">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">New Employee Added</h6>
+                            <p class="mb-0">John Smith was added to Engineering department</p>
+                            <small class="text-muted">Today, 10:30 AM</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-badge bg-info">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Department Transfer</h6>
+                            <p class="mb-0">Sarah Johnson transferred from Marketing to Sales</p>
+                            <small class="text-muted">Yesterday, 2:15 PM</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-badge bg-warning">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Performance Review Completed</h6>
+                            <p class="mb-0">Quarterly review for Michael Brown was completed</p>
+                            <small class="text-muted">Jun 22, 2025, 11:45 AM</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-badge bg-danger">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Employee Deactivated</h6>
+                            <p class="mb-0">David Wilson's account was deactivated</p>
+                            <small class="text-muted">Jun 21, 2025, 4:30 PM</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Department Distribution Chart
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const departmentChart = new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Engineering', 'Marketing', 'Finance', 'HR', 'Operations', 'Sales'],
+            datasets: [{
+                data: [65, 30, 25, 15, 45, 35],
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+                ],
+                hoverBackgroundColor: [
+                    '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f'
+                ],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // Employment Type Distribution Chart
+    const empTypeCtx = document.getElementById('employmentTypeChart').getContext('2d');
+    const employmentTypeChart = new Chart(empTypeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Full Time', 'Part Time', 'Contract', 'Intern', 'Probation'],
+            datasets: [{
+                label: 'Employees',
+                data: [135, 25, 40, 15, 20],
+                backgroundColor: [
+                    'rgba(78, 115, 223, 0.8)',
+                    'rgba(28, 200, 138, 0.8)',
+                    'rgba(54, 185, 204, 0.8)',
+                    'rgba(246, 194, 62, 0.8)',
+                    'rgba(231, 74, 59, 0.8)'
+                ],
+                borderColor: [
+                    'rgb(78, 115, 223)',
+                    'rgb(28, 200, 138)',
+                    'rgb(54, 185, 204)',
+                    'rgb(246, 194, 62)',
+                    'rgb(231, 74, 59)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

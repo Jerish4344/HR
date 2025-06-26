@@ -1,0 +1,632 @@
+{% extends "base.html" %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .profile-picture {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .profile-card {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s;
+    }
+    
+    .profile-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .profile-card .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,0.125);
+        font-weight: 500;
+    }
+    
+    .detail-row {
+        display: flex;
+        margin-bottom: 0.75rem;
+    }
+    
+    .detail-label {
+        width: 40%;
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .detail-value {
+        width: 60%;
+    }
+    
+    .document-item {
+        border-left: 3px solid #007bff;
+        transition: background-color 0.2s;
+    }
+    
+    .document-item:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .document-icon {
+        font-size: 2rem;
+        color: #6c757d;
+    }
+    
+    .attendance-summary {
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+    }
+    
+    .attendance-item {
+        flex: 1;
+        padding: 1rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .attendance-item h4 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .attendance-item p {
+        margin-bottom: 0;
+        color: #6c757d;
+    }
+    
+    .leave-balance {
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+    }
+    
+    .leave-item {
+        flex: 1;
+        padding: 1rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .leave-item h4 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .leave-item p {
+        margin-bottom: 0;
+        color: #6c757d;
+    }
+    
+    .badge-expired {
+        background-color: #dc3545;
+    }
+    
+    .badge-expiring {
+        background-color: #fd7e14;
+    }
+    
+    .badge-valid {
+        background-color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                {% if employee.profile_picture %}
+                    <img src="{{ employee.profile_picture.url }}" alt="{{ employee.full_name }}" class="profile-picture mb-3">
+                {% else %}
+                    <div class="profile-picture d-flex align-items-center justify-content-center bg-secondary mb-3">
+                        <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+                    </div>
+                {% endif %}
+                <h5 class="mb-1">{{ employee.full_name }}</h5>
+                <p class="text-muted mb-2">{{ employee.employee_id }}</p>
+                <a href="{% url 'core:edit_profile' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil-square"></i> Edit Profile
+                </a>
+            </div>
+            
+            <div class="col-md-9">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-3">
+                                    <i class="bi bi-briefcase"></i> Position
+                                </h6>
+                                <h5 class="card-text">
+                                    {% if employee.role %}
+                                        {{ employee.role.name }}
+                                    {% else %}
+                                        Not Assigned
+                                    {% endif %}
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-3">
+                                    <i class="bi bi-building"></i> Department
+                                </h6>
+                                <h5 class="card-text">
+                                    {% if employee.department %}
+                                        {{ employee.department.name }}
+                                    {% else %}
+                                        Not Assigned
+                                    {% endif %}
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-3">
+                                    <i class="bi bi-person-check"></i> Status
+                                </h6>
+                                <h5 class="card-text">
+                                    <span class="badge {% if employee.status == 'active' %}bg-success{% elif employee.status == 'probation' %}bg-warning{% elif employee.status == 'terminated' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ employee.get_status_display }}
+                                    </span>
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-3">
+                                    <i class="bi bi-calendar-check"></i> Service Duration
+                                </h6>
+                                <h5 class="card-text">{{ employee.service_duration }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+            <!-- Personal Information -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person"></i> Personal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Full Name</div>
+                                <div class="detail-value">{{ employee.full_name }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Date of Birth</div>
+                                <div class="detail-value">{{ employee.date_of_birth|date:"F d, Y" }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Gender</div>
+                                <div class="detail-value">{{ employee.get_gender_display }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Marital Status</div>
+                                <div class="detail-value">{{ employee.get_marital_status_display }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Blood Group</div>
+                                <div class="detail-value">{{ employee.get_blood_group_display }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Nationality</div>
+                                <div class="detail-value">{{ employee.nationality }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">PAN Number</div>
+                                <div class="detail-value">
+                                    {% if employee.pan_number %}
+                                        {{ employee.pan_number }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Aadhar Number</div>
+                                <div class="detail-value">
+                                    {% if employee.aadhar_number %}
+                                        {{ employee.aadhar_number }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-telephone"></i> Contact Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Primary Phone</div>
+                                <div class="detail-value">{{ employee.primary_phone }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Secondary Phone</div>
+                                <div class="detail-value">
+                                    {% if employee.secondary_phone %}
+                                        {{ employee.secondary_phone }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Personal Email</div>
+                                <div class="detail-value">{{ employee.personal_email }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Official Email</div>
+                                <div class="detail-value">{{ employee.official_email }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Current Address</div>
+                                <div class="detail-value">
+                                    {% if employee.current_address %}
+                                        {{ employee.current_address }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Permanent Address</div>
+                                <div class="detail-value">
+                                    {% if employee.permanent_address %}
+                                        {{ employee.permanent_address }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Emergency Contact</div>
+                                <div class="detail-value">
+                                    {% with primary_contact=employee.emergency_contacts.filter(is_primary=True).first %}
+                                        {% if primary_contact %}
+                                            {{ primary_contact.name }} ({{ primary_contact.relationship }})<br>
+                                            {{ primary_contact.primary_phone }}
+                                        {% else %}
+                                            <span class="text-muted">Not Available</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Employment Information -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-briefcase"></i> Employment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Employee ID</div>
+                                <div class="detail-value">{{ employee.employee_id }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Department</div>
+                                <div class="detail-value">
+                                    {% if employee.department %}
+                                        {{ employee.department.name }}
+                                    {% else %}
+                                        <span class="text-muted">Not Assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Store/Location</div>
+                                <div class="detail-value">
+                                    {% if employee.store %}
+                                        {{ employee.store.name }}
+                                    {% else %}
+                                        <span class="text-muted">Not Assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Role</div>
+                                <div class="detail-value">
+                                    {% if employee.role %}
+                                        {{ employee.role.name }}
+                                    {% else %}
+                                        <span class="text-muted">Not Assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Reporting Manager</div>
+                                <div class="detail-value">
+                                    {% if employee.reporting_manager %}
+                                        {{ employee.reporting_manager.full_name }}
+                                    {% else %}
+                                        <span class="text-muted">Not Assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Employment Type</div>
+                                <div class="detail-value">{{ employee.get_employment_type_display }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Date Joined</div>
+                                <div class="detail-value">{{ employee.date_joined|date:"F d, Y" }}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Status</div>
+                                <div class="detail-value">
+                                    <span class="badge {% if employee.status == 'active' %}bg-success{% elif employee.status == 'probation' %}bg-warning{% elif employee.status == 'terminated' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ employee.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Confirmation Date</div>
+                                <div class="detail-value">
+                                    {% if employee.confirmation_date %}
+                                        {{ employee.confirmation_date|date:"F d, Y" }}
+                                    {% elif employee.probation_end_date %}
+                                        Expected: {{ employee.probation_end_date|date:"F d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Notice Period</div>
+                                <div class="detail-value">{{ employee.notice_period_days }} days</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bank Details -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bank"></i> Bank Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Bank Name</div>
+                                <div class="detail-value">
+                                    {% if employee.bank_name %}
+                                        {{ employee.bank_name }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Account Number</div>
+                                <div class="detail-value">
+                                    {% if employee.bank_account_number %}
+                                        {{ employee.bank_account_number }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">IFSC Code</div>
+                                <div class="detail-value">
+                                    {% if employee.ifsc_code %}
+                                        {{ employee.ifsc_code }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">UAN Number</div>
+                                <div class="detail-value">
+                                    {% if employee.uan_number %}
+                                        {{ employee.uan_number }}
+                                    {% else %}
+                                        <span class="text-muted">Not Available</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-md-4">
+            <!-- Attendance Summary -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check"></i> Current Month Attendance
+                    </h5>
+                    <a href="{% url 'attendance:my_attendance' %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+                <div class="card-body">
+                    <div class="attendance-summary">
+                        <div class="attendance-item bg-success bg-opacity-10">
+                            <h4>{{ attendance_summary.present|default:"0" }}</h4>
+                            <p>Present</p>
+                        </div>
+                        <div class="attendance-item bg-danger bg-opacity-10">
+                            <h4>{{ attendance_summary.absent|default:"0" }}</h4>
+                            <p>Absent</p>
+                        </div>
+                        <div class="attendance-item bg-warning bg-opacity-10">
+                            <h4>{{ attendance_summary.late|default:"0" }}</h4>
+                            <p>Late</p>
+                        </div>
+                        <div class="attendance-item bg-info bg-opacity-10">
+                            <h4>{{ attendance_summary.half_day|default:"0" }}</h4>
+                            <p>Half Day</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Leave Balance -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-minus"></i> Leave Balance
+                    </h5>
+                    <a href="{% url 'attendance:my_leaves' %}" class="btn btn-sm btn-outline-primary">Apply Leave</a>
+                </div>
+                <div class="card-body">
+                    <div class="leave-balance">
+                        <div class="leave-item bg-success bg-opacity-10">
+                            <h4>{{ leave_balance.total_casual|default:"0" }}</h4>
+                            <p>Casual</p>
+                        </div>
+                        <div class="leave-item bg-danger bg-opacity-10">
+                            <h4>{{ leave_balance.total_sick|default:"0" }}</h4>
+                            <p>Sick</p>
+                        </div>
+                        <div class="leave-item bg-primary bg-opacity-10">
+                            <h4>{{ leave_balance.total_earned|default:"0" }}</h4>
+                            <p>Earned</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Documents -->
+            <div class="card profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark"></i> Documents
+                    </h5>
+                    <a href="{% url 'employees:upload_document' employee.id %}" class="btn btn-sm btn-outline-primary">Upload</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if documents %}
+                        <div class="list-group list-group-flush">
+                            {% for doc in documents %}
+                                <div class="list-group-item document-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if doc.document.file_extension == 'pdf' %}
+                                                <i class="bi bi-file-earmark-pdf document-icon"></i>
+                                            {% elif doc.document.file_extension == 'doc' or doc.document.file_extension == 'docx' %}
+                                                <i class="bi bi-file-earmark-word document-icon"></i>
+                                            {% elif doc.document.file_extension == 'jpg' or doc.document.file_extension == 'jpeg' or doc.document.file_extension == 'png' %}
+                                                <i class="bi bi-file-earmark-image document-icon"></i>
+                                            {% else %}
+                                                <i class="bi bi-file-earmark document-icon"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ doc.document.title }}</h6>
+                                            <small class="text-muted">{{ doc.get_document_type_display }}</small>
+                                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                                <small class="text-muted">{{ doc.document.file_size_kb }} KB</small>
+                                                {% if doc.expiry_date %}
+                                                    {% if doc.is_expired %}
+                                                        <span class="badge badge-expired">Expired</span>
+                                                    {% else %}
+                                                        <span class="badge badge-valid">Valid until {{ doc.expiry_date|date:"d M Y" }}</span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="flex-shrink-0 ms-2">
+                                            <a href="{{ doc.document.file.url }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-file-earmark-x text-muted mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">No documents available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- QR Code -->
+            {% if employee.qr_code %}
+                <div class="card profile-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-qr-code"></i> Employee QR Code
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{{ employee.qr_code.url }}" alt="Employee QR Code" class="img-fluid" style="max-width: 200px;">
+                        <p class="text-muted mt-2 mb-0">Scan for quick identification</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
