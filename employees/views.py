@@ -213,7 +213,12 @@ def employee_create(request):
             form = EmployeeBasicForm(request.POST, request.FILES)
             if form.is_valid():
                 # Save form data to session
-                request.session['employee_basic_data'] = form.cleaned_data
+                # Convert date objects to ISO strings for JSON-compatible session storage
+                basic_data = form.cleaned_data.copy()
+                dob = basic_data.get("date_of_birth")
+                if dob:
+                    basic_data["date_of_birth"] = dob.isoformat()
+                request.session['employee_basic_data'] = basic_data
                 if 'profile_picture' in request.FILES:
                     # Handle file upload separately
                     request.session['has_profile_picture'] = True
@@ -231,7 +236,15 @@ def employee_create(request):
             form = EmployeeEmploymentForm(request.POST)
             if form.is_valid():
                 # Save form data to session
-                request.session['employee_employment_data'] = form.cleaned_data
+                employment_data = form.cleaned_data.copy()
+                # Convert date objects to strings where necessary
+                dj = employment_data.get("date_joined")
+                if dj:
+                    employment_data["date_joined"] = dj.isoformat()
+                ped = employment_data.get("probation_end_date")
+                if ped:
+                    employment_data["probation_end_date"] = ped.isoformat()
+                request.session['employee_employment_data'] = employment_data
                 return redirect('employees:create_step4')
         elif step == '4':
             # Financial information form
@@ -244,6 +257,20 @@ def employee_create(request):
                     contact_data = request.session.get('employee_contact_data', {})
                     employment_data = request.session.get('employee_employment_data', {})
                     financial_data = form.cleaned_data
+                    
+                    # Convert date strings back to `datetime.date` objects
+                    if basic_data.get("date_of_birth"):
+                        basic_data["date_of_birth"] = datetime.date.fromisoformat(
+                            basic_data["date_of_birth"]
+                        )
+                    if employment_data.get("date_joined"):
+                        employment_data["date_joined"] = datetime.date.fromisoformat(
+                            employment_data["date_joined"]
+                        )
+                    if employment_data.get("probation_end_date"):
+                        employment_data["probation_end_date"] = datetime.date.fromisoformat(
+                            employment_data["probation_end_date"]
+                        )
                     
                     # Create user account
                     username = basic_data.get('employee_id').lower()
@@ -350,22 +377,36 @@ def employee_create_step2(request):
     """
     Step 2 of employee creation - Contact information
     """
-    # Check if step 1 was completed
+    # Explicitly mark current wizard step
+    step = 2
+
+    # Ensure step-1 data exists
     if 'employee_basic_data' not in request.session:
         messages.error(request, "Please complete step 1 first.")
         return redirect('employees:create')
-    
+
+    # ------------------------------------------------------------------ #
+    # POST: validate & progress | GET: show form pre-filled from session #
+    # ------------------------------------------------------------------ #
     if request.method == 'POST':
         form = EmployeeContactForm(request.POST)
+        if form.is_valid():
+            # Persist cleaned contact data in session and move forward
+            request.session['employee_contact_data'] = form.cleaned_data
+            return redirect('employees:create_step3')
+
+        # Validation failed – fall through so template shows errors
+        messages.error(request, "Please correct the errors below.")
     else:
-        form = EmployeeContactForm()
-    
+        # Pre-fill form with any data already stored in session
+        initial_data = request.session.get('employee_contact_data', {})
+        form = EmployeeContactForm(initial=initial_data)
+
     context = {
         'title': 'Create New Employee - Contact Information',
         'form': form,
-        'step': 2
+        'step': step,  # guarantee correct step number in template
     }
-    
     return render(request, 'employees/employee_form.html', context)
 
 
@@ -375,22 +416,64 @@ def employee_create_step3(request):
     """
     Step 3 of employee creation - Employment information
     """
-    # Check if previous steps were completed
-    if 'employee_basic_data' not in request.session or 'employee_contact_data' not in request.session:
+    # Verify earlier steps are done
+    if (
+        'employee_basic_data' not in request.session
+        or 'employee_contact_data' not in request.session
+    ):
         messages.error(request, "Please complete previous steps first.")
         return redirect('employees:create')
-    
+
+    # ------------------------------------------------------------------ #
+    # POST: validate & save | GET: pre-populate from session             #
+    # ------------------------------------------------------------------ #
     if request.method == 'POST':
         form = EmployeeEmploymentForm(request.POST)
+        if form.is_valid():
+            employment_data = form.cleaned_data.copy()
+
+            # Serialize date/datetime objects to ISO strings for the session
+            dj = employment_data.get("date_joined")
+            if dj:
+                employment_data["date_joined"] = dj.isoformat()
+            ped = employment_data.get("probation_end_date")
+            if ped:
+                employment_data["probation_end_date"] = ped.isoformat()
+
+            request.session['employee_employment_data'] = employment_data
+            return redirect('employees:create_step4')
+
+        # Form invalid – fall through to render with errors
+        messages.error(request, "Please correct the errors below.")
     else:
-        form = EmployeeEmploymentForm()
-    
+        # Pre-fill using any saved session data
+        initial_data = request.session.get('employee_employment_data', {}).copy()
+
+        # Convert stored ISO strings back to `date` objects for the form
+        if isinstance(initial_data.get('date_joined'), str):
+            try:
+                initial_data['date_joined'] = datetime.date.fromisoformat(
+                    initial_data['date_joined']
+                )
+            except ValueError:
+                initial_data.pop('date_joined', None)
+
+        if isinstance(initial_data.get('probation_end_date'), str):
+            try:
+                initial_data['probation_end_date'] = datetime.date.fromisoformat(
+                    initial_data['probation_end_date']
+                )
+            except ValueError:
+                initial_data.pop('probation_end_date', None)
+
+        form = EmployeeEmploymentForm(initial=initial_data)
+
     context = {
         'title': 'Create New Employee - Employment Information',
         'form': form,
-        'step': 3
+        'step': 3,
     }
-    
+
     return render(request, 'employees/employee_form.html', context)
 
 
@@ -400,6 +483,8 @@ def employee_create_step4(request):
     """
     Step 4 of employee creation - Financial information
     """
+    step = 4  # explicit current step for template logic
+
     # Check if previous steps were completed
     if ('employee_basic_data' not in request.session or 
         'employee_contact_data' not in request.session or
@@ -415,7 +500,7 @@ def employee_create_step4(request):
     context = {
         'title': 'Create New Employee - Financial Information',
         'form': form,
-        'step': 4
+        'step': step
     }
     
     return render(request, 'employees/employee_form.html', context)
@@ -587,6 +672,120 @@ def verify_document(request, document_id):
         messages.success(request, "Document verified successfully.")
     
     return redirect('employees:detail', employee_id=document.employee.id)
+
+# --------------------------------------------------------------------------- #
+#                    Read-only list pages for employee data                   #
+# --------------------------------------------------------------------------- #
+
+
+@login_required
+def employee_documents(request, employee_id):
+    """
+    View to list all documents for an employee
+    """
+    employee = get_object_or_404(Employee, pk=employee_id, is_deleted=False)
+
+    # Permission check
+    if not request.user.is_staff and request.user.employee_profile != employee:
+        if (
+            not hasattr(request.user, 'employee_profile')
+            or employee.reporting_manager != request.user.employee_profile
+        ):
+            raise PermissionDenied(
+                "You don't have permission to view this employee's documents."
+            )
+
+    documents = EmployeeDocument.objects.filter(employee=employee, is_deleted=False)
+
+    context = {
+        'title': f'Documents for {employee.full_name}',
+        'employee': employee,
+        'documents': documents,
+    }
+    return render(request, 'employees/document_list.html', context)
+
+
+@login_required
+def employee_contacts(request, employee_id):
+    """
+    View to list all emergency contacts for an employee
+    """
+    employee = get_object_or_404(Employee, pk=employee_id, is_deleted=False)
+
+    # Permission check
+    if not request.user.is_staff and request.user.employee_profile != employee:
+        if (
+            not hasattr(request.user, 'employee_profile')
+            or employee.reporting_manager != request.user.employee_profile
+        ):
+            raise PermissionDenied(
+                "You don't have permission to view this employee's contacts."
+            )
+
+    contacts = EmergencyContact.objects.filter(employee=employee)
+
+    context = {
+        'title': f'Emergency Contacts for {employee.full_name}',
+        'employee': employee,
+        'contacts': contacts,
+    }
+    return render(request, 'employees/contact_list.html', context)
+
+
+@login_required
+def employee_education(request, employee_id):
+    """
+    View to list all education records for an employee
+    """
+    employee = get_object_or_404(Employee, pk=employee_id, is_deleted=False)
+
+    # Permission check
+    if not request.user.is_staff and request.user.employee_profile != employee:
+        if (
+            not hasattr(request.user, 'employee_profile')
+            or employee.reporting_manager != request.user.employee_profile
+        ):
+            raise PermissionDenied(
+                "You don't have permission to view this employee's education records."
+            )
+
+    education_records = Education.objects.filter(employee=employee, is_deleted=False)
+
+    context = {
+        'title': f'Education for {employee.full_name}',
+        'employee': employee,
+        'education_records': education_records,
+    }
+    return render(request, 'employees/education_list.html', context)
+
+
+@login_required
+def employee_experience(request, employee_id):
+    """
+    View to list all work experience records for an employee
+    """
+    employee = get_object_or_404(Employee, pk=employee_id, is_deleted=False)
+
+    # Permission check
+    if not request.user.is_staff and request.user.employee_profile != employee:
+        if (
+            not hasattr(request.user, 'employee_profile')
+            or employee.reporting_manager != request.user.employee_profile
+        ):
+            raise PermissionDenied(
+                "You don't have permission to view this employee's work experience."
+            )
+
+    experience_records = WorkExperience.objects.filter(
+        employee=employee, is_deleted=False
+    )
+
+    context = {
+        'title': f'Work Experience for {employee.full_name}',
+        'employee': employee,
+        'experience_records': experience_records,
+    }
+    return render(request, 'employees/experience_list.html', context)
 
 
 @login_required
@@ -765,8 +964,13 @@ def add_language(request, employee_id):
 @staff_member_required
 def export_employees(request):
     """
-    View to export employees to CSV
+    Export employees in various formats.
+
+    Supported formats via query-string  ?format=csv|excel|pdf
+    Default: csv
     """
+    export_format = request.GET.get("format", "csv").lower()
+
     # Get filter parameters from request
     department_id = request.GET.get('department')
     store_id = request.GET.get('store')
@@ -814,7 +1018,105 @@ def export_employees(request):
             employee.date_joined.strftime('%Y-%m-%d') if employee.date_joined else ''
         ])
     
-    return response
+    # Build a reusable data matrix so the same queryset can be reused
+    headers = [
+        'Employee ID', 'First Name', 'Middle Name', 'Last Name', 'Email',
+        'Phone', 'Department', 'Store', 'Role', 'Status', 'Joined Date'
+    ]
+    data = []
+    for employee in employees:
+        data.append([
+            employee.employee_id,
+            employee.first_name,
+            employee.middle_name or '',
+            employee.last_name,
+            employee.official_email,
+            employee.primary_phone,
+            employee.department.name if employee.department else '',
+            employee.store.name if employee.store else '',
+            employee.role.name if employee.role else '',
+            employee.get_status_display(),
+            employee.date_joined.strftime('%Y-%m-%d') if employee.date_joined else ''
+        ])
+
+    # ---------- CSV ----------
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="employees.csv"'
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        writer.writerows(data)
+        return response
+
+    # ---------- Excel ----------
+    elif export_format == 'excel':
+        try:
+            import xlsxwriter   # local import keeps optional dependency
+        except ImportError:    # gracefully fall back to csv
+            messages.warning(request, "Excel export unavailable; falling back to CSV.")
+            return redirect(request.path + '?format=csv')
+
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        worksheet = workbook.add_worksheet("Employees")
+
+        # Write headers
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header)
+
+        # Write rows
+        for row_num, row in enumerate(data, start=1):
+            for col_num, cell in enumerate(row):
+                worksheet.write(row_num, col_num, cell)
+
+        workbook.close()
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="employees.xlsx"'
+        return response
+
+    # ---------- PDF ----------
+    elif export_format == 'pdf':
+        try:
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.styles import getSampleStyleSheet
+        except ImportError:
+            messages.warning(request, "PDF export unavailable; falling back to CSV.")
+            return redirect(request.path + '?format=csv')
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="employees.pdf"'
+
+        doc = SimpleDocTemplate(response, pagesize=letter)
+        style_sheet = getSampleStyleSheet()
+        elements = [
+            Paragraph("Employee Report", style_sheet['Title'])
+        ]
+
+        table_data = [headers] + data
+        table = Table(table_data, repeatRows=1)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+        ]))
+        elements.append(table)
+        doc.build(elements)
+        return response
+
+    # ---------- Unknown format ----------
+    else:
+        messages.warning(request, "Unknown export format requested; defaulted to CSV.")
+        return redirect(request.path + '?format=csv')
 
 
 @login_required

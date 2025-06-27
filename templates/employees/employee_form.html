@@ -5,6 +5,11 @@
     {% if employee %}Edit Employee: {{ employee.full_name }}{% else %}Add New Employee{% endif %}
 {% endblock %}
 
+{% block extra_head %}
+<!-- Emergency fix for multi-step form navigation -->
+<script src="/static/employees/fix_navigation.js"></script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
     .form-section {
@@ -203,6 +208,11 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Step Debug Info -->
+        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd;">
+            <strong>Current Step:</strong> {{ step }}
+        </div>
         
         <!-- Employee Form -->
         {% if employee %}
@@ -597,7 +607,15 @@
             </form>
         {% else %}
             <!-- Create mode: Multi-step form -->
+            {% if step == 1 %}
             <form method="post" action="{% url 'employees:create' %}" enctype="multipart/form-data" class="multi-step-form needs-validation" novalidate>
+            {% elif step == 2 %}
+            <form method="post" action="{% url 'employees:create_step2' %}" enctype="multipart/form-data" class="multi-step-form needs-validation" novalidate>
+            {% elif step == 3 %}
+            <form method="post" action="{% url 'employees:create_step3' %}" enctype="multipart/form-data" class="multi-step-form needs-validation" novalidate>
+            {% elif step == 4 %}
+            <form method="post" action="{% url 'employees:create_step4' %}" enctype="multipart/form-data" class="multi-step-form needs-validation" novalidate>
+            {% endif %}
                 {% csrf_token %}
                 <input type="hidden" name="step" value="{{ step }}">
                 
@@ -698,6 +716,8 @@
                             </div>
                         </div>
                     </div>
+                    
+                    {# navigation removed – will use global nav below #}
                 </div>
                 
                 <!-- Step 2: Contact Information -->
@@ -772,6 +792,7 @@
                             </div>
                         </div>
                     </div>
+                    {# nav removed – global #}
                 </div>
                 
                 <!-- Step 3: Employment Information -->
@@ -902,6 +923,7 @@
                             </div>
                         </div>
                     </div>
+                    {# nav removed – global #}
                 </div>
                 
                 <!-- Step 4: Financial Information -->
@@ -976,29 +998,39 @@
                             </div>
                         </div>
                     </div>
+                    {# nav removed – global #}
                 </div>
-                
-                <div class="form-navigation">
+
+                <!-- BEGIN EMERGENCY FIXED NAVIGATION (ALWAYS VISIBLE) -->
+                <div style="margin-top: 30px; padding: 20px; background: #e9f7fe; border: 2px solid #007bff; border-radius: 10px; text-align: center;">
+                    <h4 style="margin-bottom: 15px; color: #0056b3;">Form Navigation</h4>
+
                     {% if step > 1 %}
-                        <a href="{% url 'employees:create' %}?step={{ step|add:'-1' }}" class="btn btn-outline-secondary prev-step">
-                            <i class="fas fa-arrow-left me-1"></i>Previous
+                        <a href="
+                            {% if step == 2 %}{% url 'employees:create' %}
+                            {% elif step == 3 %}{% url 'employees:create_step2' %}
+                            {% elif step == 4 %}{% url 'employees:create_step3' %}
+                            {% endif %}"
+                           class="btn btn-outline-secondary btn-lg" style="margin-right: 10px;">
+                            <i class="fas fa-arrow-left me-1"></i> Previous Step
                         </a>
                     {% else %}
-                        <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i>Cancel
+                        <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary btn-lg" style="margin-right: 10px;">
+                            <i class="fas fa-times me-1"></i> Cancel
                         </a>
                     {% endif %}
-                    
-                    {% if step < 4 %}
-                        <button type="submit" class="btn btn-primary next-step">
-                            Next<i class="fas fa-arrow-right ms-1"></i>
-                        </button>
-                    {% else %}
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save me-1"></i>Create Employee
-                        </button>
-                    {% endif %}
+
+                    <button type="submit"
+                            class="btn {% if step < 4 %}btn-primary{% else %}btn-success{% endif %} btn-lg"
+                            style="min-width: 200px; font-weight: bold; font-size: 18px; padding: 12px 24px;">
+                        {% if step < 4 %}
+                            Continue to Next Step <i class="fas fa-arrow-right ms-1"></i>
+                        {% else %}
+                            <i class="fas fa-save me-1"></i> Create Employee
+                        {% endif %}
+                    </button>
                 </div>
+                <!-- END EMERGENCY FIXED NAVIGATION -->
             </form>
         {% endif %}
     </div>
@@ -1007,131 +1039,7 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Profile picture preview
-        const profilePictureInput = document.getElementById('id_profile_picture');
-        const profilePicturePreview = document.getElementById('profile-picture-preview');
-        const profilePicturePlaceholder = document.getElementById('profile-picture-preview-placeholder');
-        
-        if (profilePictureInput) {
-            profilePictureInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        profilePicturePreview.src = e.target.result;
-                        profilePicturePreview.classList.remove('d-none');
-                        if (profilePicturePlaceholder) {
-                            profilePicturePlaceholder.classList.add('d-none');
-                        }
-                    }
-                    
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
-        }
-        
-        // Same as current address checkbox
-        const sameAsCurrentCheckbox = document.getElementById('same_as_current');
-        const currentAddressField = document.getElementById('id_current_address');
-        const permanentAddressField = document.getElementById('id_permanent_address');
-        
-        if (sameAsCurrentCheckbox && currentAddressField && permanentAddressField) {
-            sameAsCurrentCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    permanentAddressField.value = currentAddressField.value;
-                    permanentAddressField.disabled = true;
-                } else {
-                    permanentAddressField.disabled = false;
-                }
-            });
-            
-            currentAddressField.addEventListener('input', function() {
-                if (sameAsCurrentCheckbox.checked) {
-                    permanentAddressField.value = currentAddressField.value;
-                }
-            });
-        }
-        
-        // Form validation
-        const forms = document.querySelectorAll('.needs-validation');
-        
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    
-                    // Find the first invalid field and focus it
-                    const invalidField = form.querySelector(':invalid');
-                    if (invalidField) {
-                        invalidField.focus();
-                    }
-                }
-                
-                form.classList.add('was-validated');
-            }, false);
-        });
-        
-        // Multi-step form navigation
-        const nextButtons = document.querySelectorAll('.next-step');
-        const prevButtons = document.querySelectorAll('.prev-step');
-        
-        nextButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                // Get the current step
-                const currentStep = parseInt(document.querySelector('input[name="step"]').value);
-                
-                // Validate current step fields
-                const currentStepContent = document.getElementById(`step-${currentStep}-content`);
-                const requiredFields = currentStepContent.querySelectorAll('[required]');
-                let isValid = true;
-                
-                requiredFields.forEach(field => {
-                    if (!field.value) {
-                        isValid = false;
-                        field.classList.add('is-invalid');
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-                
-                if (!isValid) {
-                    e.preventDefault();
-                    
-                    // Find the first invalid field and focus it
-                    const invalidField = currentStepContent.querySelector('.is-invalid');
-                    if (invalidField) {
-                        invalidField.focus();
-                    }
-                }
-            });
-        });
-        
-        // Handle employment type change
-        const employmentTypeField = document.getElementById('id_employment_type');
-        const probationEndDateField = document.getElementById('id_probation_end_date');
-        const statusField = document.getElementById('id_status');
-        
-        if (employmentTypeField && statusField) {
-            employmentTypeField.addEventListener('change', function() {
-                if (this.value === 'probation') {
-                    statusField.value = 'probation';
-                    if (probationEndDateField) {
-                        // Set probation end date to 3 months from now
-                        const today = new Date();
-                        const probationEnd = new Date(today);
-                        probationEnd.setMonth(today.getMonth() + 3);
-                        
-                        // Format date as YYYY-MM-DD
-                        const year = probationEnd.getFullYear();
-                        const month = String(probationEnd.getMonth() + 1).padStart(2, '0');
-                        const day = String(probationEnd.getDate()).padStart(2, '0');
-                        probationEndDateField.value = `${year}-${month}-${day}`;
-                    }
-                }
-            });
-        }
-    });
+  console.log("Employee form page loaded");
+  // Form utility functions initialized
 </script>
 {% endblock %}
